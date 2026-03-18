@@ -50,5 +50,5 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Increase timeout for batch evaluations (10 minutes)
-export const maxDuration = 600;
+// Max timeout for Vercel Hobby plan (60s)
+export const maxDuration = 60;
