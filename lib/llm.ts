@@ -1,32 +1,39 @@
 /**
- * Gemini API client for LLM-as-judge evaluation
- * Uses Google's Generative AI to score outputs against expected results
+ * LLM client for evaluation using FastRouter (OpenAI-compatible API)
+ * Uses the LLM-as-judge pattern to score outputs against expected results
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import OpenAI from 'openai';
 import { RubricScores } from '@/types';
 
 // Use placeholder during build if env var is not set
-const apiKey = process.env.GOOGLE_API_KEY || 'placeholder-api-key';
+const apiKey = process.env.FASTROUTER_API_KEY || 'placeholder-api-key';
 
-const genAI = new GoogleGenerativeAI(apiKey);
+const client = new OpenAI({
+  apiKey,
+  baseURL: 'https://api.fastrouter.ai/api/v1',
+});
 
 /**
- * The model used for evaluation
+ * The model used for evaluation (configurable via env var)
  */
-const MODEL_NAME = 'gemini-2.0-flash-exp';
+const MODEL_NAME = process.env.LLM_MODEL || 'openai/gpt-4o-mini';
 
 /**
- * Generate actual output using Gemini based on a prompt
+ * Generate actual output using the LLM based on a prompt
  * This simulates what an AI would respond to the given prompt
  */
 export async function generateOutput(prompt: string): Promise<string> {
   try {
-    const model = genAI.getGenerativeModel({ model: MODEL_NAME });
+    const response = await client.chat.completions.create({
+      model: MODEL_NAME,
+      messages: [{ role: 'user', content: prompt }],
+    });
 
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const text = response.text();
+    const text = response.choices[0]?.message?.content;
+    if (!text) {
+      throw new Error('Empty response from LLM');
+    }
 
     return text;
   } catch (error: any) {
@@ -48,9 +55,6 @@ export async function evaluateWithLLM(
   actualOutput: string
 ): Promise<RubricScores> {
   try {
-    const model = genAI.getGenerativeModel({ model: MODEL_NAME });
-
-    // Construct the evaluation prompt with detailed rubric
     const evaluationPrompt = `You are an expert evaluator. Given a prompt, expected output, and actual output, score the actual output on three criteria:
 
 1. **Accuracy (0-10)**: How factually correct is the actual output compared to the expected output? Does it contain the same key information and facts?
@@ -85,9 +89,15 @@ Respond ONLY with valid JSON in this exact format (no other text, no markdown, n
 
 Where X, Y, and Z are integers from 0 to 10.`;
 
-    const result = await model.generateContent(evaluationPrompt);
-    const response = result.response;
-    const text = response.text();
+    const response = await client.chat.completions.create({
+      model: MODEL_NAME,
+      messages: [{ role: 'user', content: evaluationPrompt }],
+    });
+
+    const text = response.choices[0]?.message?.content;
+    if (!text) {
+      throw new Error('Empty response from LLM');
+    }
 
     // Parse the JSON response
     // Remove any markdown code blocks if present
@@ -109,12 +119,11 @@ Where X, Y, and Z are integers from 0 to 10.`;
       scores.clarity < 0 || scores.clarity > 10 ||
       scores.completeness < 0 || scores.completeness > 10
     ) {
-      throw new Error('Invalid scores returned from Gemini');
+      throw new Error('Invalid scores returned from LLM');
     }
 
     return scores;
   } catch (error: any) {
-    // If JSON parsing fails, provide default low scores
     console.error('Error evaluating with LLM:', error);
     throw new Error(`Failed to evaluate with LLM: ${error.message}`);
   }

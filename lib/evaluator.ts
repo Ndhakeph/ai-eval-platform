@@ -4,7 +4,7 @@
  */
 
 import { getTestCaseById, insertEvaluationResult } from './supabase';
-import { evaluateWithLLM, calculateTotalScore, generateOutput } from './gemini';
+import { evaluateWithLLM, calculateTotalScore, generateOutput } from './llm';
 import { EvaluationResult } from '@/types';
 
 /**
@@ -12,7 +12,7 @@ import { EvaluationResult } from '@/types';
  *
  * @param testCaseId - The ID of the test case to evaluate
  * @param actualOutput - The actual output to evaluate (if provided)
- *                       If not provided, will generate output using Gemini
+ *                       If not provided, will generate output using the LLM
  * @returns Promise<EvaluationResult> - The evaluation result
  */
 export async function runEvaluation(
@@ -53,7 +53,7 @@ export async function runEvaluation(
       clarity_score: scores.clarity,
       completeness_score: scores.completeness,
       total_score: totalScore,
-      model_used: 'gemini-2.0-flash-exp',
+      model_used: process.env.LLM_MODEL || 'openai/gpt-4o-mini',
     });
 
     // 6. Return the formatted result
@@ -67,7 +67,7 @@ export async function runEvaluation(
         completeness: scores.completeness,
       },
       total_score: totalScore,
-      model_used: 'gemini-2.0-flash-exp',
+      model_used: process.env.LLM_MODEL || 'openai/gpt-4o-mini',
       created_at: result.created_at,
     };
   } catch (error: any) {
