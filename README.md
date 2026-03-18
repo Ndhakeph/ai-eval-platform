@@ -2,8 +2,9 @@
 
 Automated quality scoring for AI-generated content using the LLM-as-Judge pattern — upload test cases via CSV, run rubric-based evaluations with GPT-4o-mini via FastRouter, and track scores on a dashboard.
 
-<!-- [![Live Demo](https://img.shields.io/badge/Live_Demo-▶_Try_It-blue?style=for-the-badge)](DEPLOY_URL) -->
+[![Live Demo](https://img.shields.io/badge/Live_Demo-▶_Try_It-blue?style=for-the-badge)](https://ai-eval-platform.vercel.app/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed_on-Vercel-black?style=for-the-badge&logo=vercel)](https://ai-eval-platform.vercel.app/)
 
 ---
 
@@ -49,7 +50,7 @@ The judge prompt uses tiered scoring criteria (0-3 poor, 4-6 partial, 7-8 good, 
 ## Getting Started
 
 ```bash
-git clone https://github.com/tacitusblindsbig/ai-eval-platform.git
+git clone https://github.com/Ndhakeph/ai-eval-platform.git
 cd ai-eval-platform
 npm install
 cp .env.example .env.local
