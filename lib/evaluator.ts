@@ -1,114 +1,78 @@
 /**
- * Core evaluation logic
- * Orchestrates the evaluation process from fetching test cases to storing results
- */
-
-import { getTestCaseById, insertEvaluationResult } from './supabase';
-import { evaluateWithLLM, calculateTotalScore, generateOutput } from './llm';
-import { EvaluationResult } from '@/types';
-
-/**
- * Run an evaluation for a test case
+ * Stateless batch evaluation runner.
  *
- * @param testCaseId - The ID of the test case to evaluate
- * @param actualOutput - The actual output to evaluate (if provided)
- *                       If not provided, will generate output using the LLM
- * @returns Promise<EvaluationResult> - The evaluation result
+ * Scores many outputs concurrently with a bounded worker pool so realistic CSV
+ * uploads finish well within Vercel's function cap. There are no artificial
+ * sleeps and no persistence — results are returned to the caller and rendered
+ * in-session. One failed row never sinks the batch; it is reported as an error
+ * on that row instead.
  */
-export async function runEvaluation(
-  testCaseId: string,
-  actualOutput?: string
-): Promise<EvaluationResult> {
-  try {
-    // 1. Fetch the test case from Supabase
-    const testCase = await getTestCaseById(testCaseId);
 
-    if (!testCase) {
-      throw new Error(`Test case with ID ${testCaseId} not found`);
-    }
+import { scoreOutput } from './judge';
+import { ScoredEvaluation } from '@/types';
 
-    // 2. Generate actual output if not provided
-    let outputToEvaluate = actualOutput;
-    if (!outputToEvaluate) {
-      console.log('Generating output for prompt:', testCase.prompt);
-      outputToEvaluate = await generateOutput(testCase.prompt);
-    }
+/** Max rows accepted in a single batch request (keeps us under the time cap). */
+export const MAX_BATCH_ROWS = 12;
 
-    // 3. Evaluate the output using LLM-as-judge
-    console.log('Evaluating output against expected output...');
-    const scores = await evaluateWithLLM(
-      testCase.prompt,
-      testCase.expected_output,
-      outputToEvaluate
-    );
+/** Concurrent judge calls in flight at once. */
+const CONCURRENCY = 5;
 
-    // 4. Calculate total score
-    const totalScore = calculateTotalScore(scores);
+export interface BatchItem {
+  prompt: string;
+  output: string;
+  reference?: string;
+  domain?: string;
+}
 
-    // 5. Store the result in Supabase
-    const result = await insertEvaluationResult({
-      test_case_id: testCaseId,
-      actual_output: outputToEvaluate,
-      accuracy_score: scores.accuracy,
-      clarity_score: scores.clarity,
-      completeness_score: scores.completeness,
-      total_score: totalScore,
-      model_used: process.env.LLM_MODEL || 'openai/gpt-4o-mini',
-    });
-
-    // 6. Return the formatted result
-    return {
-      id: result.id,
-      test_case_id: testCaseId,
-      actual_output: outputToEvaluate,
-      scores: {
-        accuracy: scores.accuracy,
-        clarity: scores.clarity,
-        completeness: scores.completeness,
-      },
-      total_score: totalScore,
-      model_used: process.env.LLM_MODEL || 'openai/gpt-4o-mini',
-      created_at: result.created_at,
-    };
-  } catch (error: any) {
-    console.error('Error running evaluation:', error);
-    throw new Error(`Failed to run evaluation: ${error.message}`);
-  }
+export interface BatchRowResult {
+  id: string;
+  domain: string;
+  prompt: string;
+  output: string;
+  reference?: string;
+  /** Present on success. */
+  result?: Pick<ScoredEvaluation, 'accuracy' | 'clarity' | 'completeness' | 'total_score' | 'model_used'>;
+  /** Present on failure — a calm message, never a raw stack. */
+  error?: string;
 }
 
 /**
- * Run evaluations for multiple test cases
- * Processes them sequentially to avoid rate limiting
- *
- * @param testCaseIds - Array of test case IDs to evaluate
- * @param onProgress - Optional callback for progress updates
- * @returns Promise<EvaluationResult[]> - Array of evaluation results
+ * Run a bounded-concurrency pool over `items`, scoring each one. Preserves input
+ * order in the returned array.
  */
-export async function runBatchEvaluation(
-  testCaseIds: string[],
-  onProgress?: (completed: number, total: number) => void
-): Promise<EvaluationResult[]> {
-  const results: EvaluationResult[] = [];
-  const total = testCaseIds.length;
+export async function runBatch(items: BatchItem[]): Promise<BatchRowResult[]> {
+  const results: BatchRowResult[] = new Array(items.length);
+  let cursor = 0;
 
-  for (let i = 0; i < testCaseIds.length; i++) {
-    try {
-      const result = await runEvaluation(testCaseIds[i]);
-      results.push(result);
+  async function worker() {
+    while (cursor < items.length) {
+      const index = cursor++;
+      const item = items[index];
+      const base = {
+        id: `row-${index + 1}`,
+        domain: item.domain?.trim() || 'Uploaded',
+        prompt: item.prompt,
+        output: item.output,
+        reference: item.reference,
+      };
 
-      if (onProgress) {
-        onProgress(i + 1, total);
+      try {
+        const result = await scoreOutput({
+          prompt: item.prompt,
+          output: item.output,
+          reference: item.reference,
+        });
+        results[index] = { ...base, result };
+      } catch {
+        results[index] = {
+          ...base,
+          error: 'The judge could not score this row. It was skipped so the rest of the batch could finish.',
+        };
       }
-
-      // Add a small delay to avoid rate limiting (1 second between requests)
-      if (i < testCaseIds.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-    } catch (error: any) {
-      console.error(`Failed to evaluate test case ${testCaseIds[i]}:`, error);
-      // Continue with next test case instead of failing entirely
     }
   }
 
+  const pool = Array.from({ length: Math.min(CONCURRENCY, items.length) }, worker);
+  await Promise.all(pool);
   return results;
 }

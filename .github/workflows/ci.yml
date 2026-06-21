@@ -22,8 +22,6 @@ jobs:
 
       - run: npm run lint
 
+      # Build with NO env vars set — the app must compile and boot without any
+      # API key (baked demo works offline; live features degrade gracefully).
       - run: npm run build
-        env:
-          FASTROUTER_API_KEY: placeholder
-          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder

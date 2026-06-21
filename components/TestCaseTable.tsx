@@ -1,147 +1,106 @@
 'use client';
 
 /**
- * Table component for displaying test cases
+ * Data-dense results table for a list of scored evaluations. Each row expands to
+ * reveal the output and the judge's per-criterion reasoning. Used by the
+ * dashboard and the batch-CSV results view.
  */
 
-import { TestCase } from '@/types';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
+import { ScoredEvaluation } from '@/types';
+import { scoreTone, formatScore } from '@/lib/score-format';
+import ScorePill from './ScorePill';
 
-interface TestCaseTableProps {
-  testCases: TestCase[];
-  onRunEvaluation?: (testCaseId: string) => void;
-  isEvaluating?: boolean;
-  evaluatingId?: string | null;
+function HeaderCell({ children, align = 'left' }: { children: React.ReactNode; align?: 'left' | 'center' }) {
+  return (
+    <th
+      className={`px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 ${
+        align === 'center' ? 'text-center' : 'text-left'
+      }`}
+    >
+      {children}
+    </th>
+  );
 }
 
-export default function TestCaseTable({
-  testCases,
-  onRunEvaluation,
-  isEvaluating = false,
-  evaluatingId = null,
-}: TestCaseTableProps) {
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+export default function ResultsTable({ rows }: { rows: ScoredEvaluation[] }) {
+  const [expanded, setExpanded] = useState<string | null>(null);
 
-  if (!testCases || testCases.length === 0) {
+  if (rows.length === 0) {
     return (
-      <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
-        <p className="text-gray-500">No test cases found.</p>
-        <p className="text-sm text-gray-400 mt-2">
-          Upload a CSV file to get started.
-        </p>
+      <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
+        No evaluations to show yet.
       </div>
     );
   }
 
-  const toggleExpand = (id: string) => {
-    setExpandedId(expandedId === id ? null : id);
-  };
-
   return (
-    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y divide-slate-200">
+          <thead className="bg-slate-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Prompt
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Expected Output
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Created
-              </th>
-              {onRunEvaluation && (
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              )}
+              <HeaderCell>Domain</HeaderCell>
+              <HeaderCell>Prompt</HeaderCell>
+              <HeaderCell align="center">Acc.</HeaderCell>
+              <HeaderCell align="center">Clar.</HeaderCell>
+              <HeaderCell align="center">Comp.</HeaderCell>
+              <HeaderCell align="center">Total</HeaderCell>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {testCases.map((testCase) => (
-              <tr key={testCase.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 text-sm text-gray-900">
-                  <div className="max-w-xs">
-                    {expandedId === testCase.id ? (
-                      <div>
-                        <p className="whitespace-pre-wrap">{testCase.prompt}</p>
-                        <button
-                          onClick={() => toggleExpand(testCase.id)}
-                          className="text-blue-600 hover:text-blue-800 text-xs mt-1"
-                        >
-                          Show less
-                        </button>
-                      </div>
-                    ) : (
-                      <div>
-                        <p className="line-clamp-2">{testCase.prompt}</p>
-                        {testCase.prompt.length > 100 && (
-                          <button
-                            onClick={() => toggleExpand(testCase.id)}
-                            className="text-blue-600 hover:text-blue-800 text-xs mt-1"
-                          >
-                            Show more
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-900">
-                  <div className="max-w-xs line-clamp-2">{testCase.expected_output}</div>
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
-                  {new Date(testCase.created_at).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
-                </td>
-                {onRunEvaluation && (
-                  <td className="px-6 py-4 text-right text-sm">
-                    <button
-                      onClick={() => onRunEvaluation(testCase.id)}
-                      disabled={isEvaluating}
-                      className={`inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white ${
-                        evaluatingId === testCase.id
-                          ? 'bg-blue-400 cursor-not-allowed'
-                          : 'bg-blue-600 hover:bg-blue-700'
-                      } disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors`}
-                    >
-                      {evaluatingId === testCase.id ? (
-                        <>
-                          <svg
-                            className="animate-spin -ml-1 mr-2 h-3 w-3 text-white"
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                          >
-                            <circle
-                              className="opacity-25"
-                              cx="12"
-                              cy="12"
-                              r="10"
-                              stroke="currentColor"
-                              strokeWidth="4"
-                            ></circle>
-                            <path
-                              className="opacity-75"
-                              fill="currentColor"
-                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                            ></path>
-                          </svg>
-                          Evaluating...
-                        </>
-                      ) : (
-                        'Run Evaluation'
-                      )}
-                    </button>
-                  </td>
-                )}
-              </tr>
-            ))}
+          <tbody className="divide-y divide-slate-100">
+            {rows.map((row) => {
+              const open = expanded === row.id;
+              const tone = scoreTone(row.total_score);
+              return (
+                <Fragment key={row.id}>
+                  <tr
+                    onClick={() => setExpanded(open ? null : row.id)}
+                    className="cursor-pointer transition-colors hover:bg-slate-50"
+                  >
+                    <td className="whitespace-nowrap px-4 py-3">
+                      <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                        {row.domain}
+                      </span>
+                    </td>
+                    <td className="max-w-md px-4 py-3 text-sm text-slate-700">
+                      <span className="line-clamp-1">{row.prompt}</span>
+                    </td>
+                    <td className="px-4 py-3 text-center"><ScorePill score={row.accuracy.score} size="sm" /></td>
+                    <td className="px-4 py-3 text-center"><ScorePill score={row.clarity.score} size="sm" /></td>
+                    <td className="px-4 py-3 text-center"><ScorePill score={row.completeness.score} size="sm" /></td>
+                    <td className={`px-4 py-3 text-center text-sm font-bold tabular-nums ${tone.text}`}>
+                      {formatScore(row.total_score)}
+                    </td>
+                  </tr>
+                  {open && (
+                    <tr className="bg-slate-50/60">
+                      <td colSpan={6} className="px-4 py-4">
+                        <div className="space-y-3 text-sm">
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Output</p>
+                            <p className="mt-1 whitespace-pre-wrap rounded-lg bg-white p-3 font-mono text-xs text-slate-700 ring-1 ring-slate-200">
+                              {row.output}
+                            </p>
+                          </div>
+                          <div className="grid gap-3 sm:grid-cols-3">
+                            {(['accuracy', 'clarity', 'completeness'] as const).map((c) => (
+                              <div key={c} className="rounded-lg bg-white p-3 ring-1 ring-slate-200">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs font-semibold capitalize text-slate-600">{c}</span>
+                                  <ScorePill score={row[c].score} size="sm" />
+                                </div>
+                                <p className="mt-1.5 text-xs leading-relaxed text-slate-600">{row[c].reasoning}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
+              );
+            })}
           </tbody>
         </table>
       </div>

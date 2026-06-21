@@ -1,103 +1,81 @@
 'use client';
 
 /**
- * Card component for displaying a single evaluation result
+ * Detailed result card for a single scored output: the headline total plus each
+ * criterion's score, a proportional bar, and the judge's written reasoning.
+ * Shared by the Score Output page (live results) and the dashboard showcase.
  */
 
-import { EvaluationResult } from '@/types';
+import { ScoredEvaluation } from '@/types';
+import { scoreTone, formatScore } from '@/lib/score-format';
 
-interface EvalCardProps {
-  evaluation: EvaluationResult;
-  testCasePrompt?: string;
+type ScoreLike = Pick<
+  ScoredEvaluation,
+  'accuracy' | 'clarity' | 'completeness' | 'total_score' | 'model_used'
+>;
+
+function CriterionRow({
+  label,
+  score,
+  reasoning,
+}: {
+  label: string;
+  score: number;
+  reasoning: string;
+}) {
+  const tone = scoreTone(score);
+  return (
+    <div className="py-3">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-slate-700">{label}</span>
+        <span className={`text-sm font-semibold tabular-nums ${tone.text}`}>
+          {formatScore(score)}<span className="text-xs text-slate-400">/10</span>
+        </span>
+      </div>
+      <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+        <div className={`h-full rounded-full ${tone.bg}`} style={{ width: `${(score / 10) * 100}%` }} />
+      </div>
+      <p className="mt-2 text-sm leading-relaxed text-slate-600">{reasoning}</p>
+    </div>
+  );
 }
 
-export default function EvalCard({ evaluation, testCasePrompt }: EvalCardProps) {
-  const getScoreColor = (score: number) => {
-    if (score >= 8) return 'text-green-600 bg-green-100';
-    if (score >= 6) return 'text-yellow-600 bg-yellow-100';
-    return 'text-red-600 bg-red-100';
-  };
-
-  const getTotalScoreColor = (score: number) => {
-    if (score >= 8) return 'bg-green-600';
-    if (score >= 6) return 'bg-yellow-600';
-    return 'bg-red-600';
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
+export default function EvalCard({
+  result,
+  title,
+}: {
+  result: ScoreLike;
+  title?: string;
+}) {
+  const tone = scoreTone(result.total_score);
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-      {/* Header */}
-      <div className="flex items-start justify-between p-4 border-b border-gray-200">
-        <div className="flex-1">
-          {testCasePrompt && (
-            <p className="text-sm text-gray-600 mb-1 line-clamp-2">{testCasePrompt}</p>
-          )}
-          <p className="text-xs text-gray-400">{formatDate(evaluation.created_at)}</p>
+    <div className="animate-fade-in-up rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+            {title ?? 'Evaluation result'}
+          </p>
+          <p className="mt-1 text-sm text-slate-500">
+            Judged by <span className="font-mono text-slate-700">{result.model_used}</span>
+          </p>
         </div>
-        <div
-          className={`ml-4 px-3 py-1 rounded-full text-white font-bold text-lg ${getTotalScoreColor(
-            evaluation.total_score
-          )}`}
-        >
-          {evaluation.total_score.toFixed(1)}
+        <div className="text-right">
+          <div className={`text-3xl font-bold tabular-nums ${tone.text}`}>
+            {formatScore(result.total_score)}
+          </div>
+          <div className="text-xs font-medium uppercase tracking-wide text-slate-400">Total / 10</div>
         </div>
       </div>
 
-      {/* Rubric Scores */}
-      <div className="p-4 space-y-3">
-        <div className="grid grid-cols-3 gap-3">
-          {/* Accuracy */}
-          <div className="text-center">
-            <div
-              className={`text-2xl font-bold ${getScoreColor(evaluation.scores.accuracy)} rounded-lg py-2`}
-            >
-              {evaluation.scores.accuracy}
-            </div>
-            <p className="text-xs text-gray-600 mt-1">Accuracy</p>
-          </div>
-
-          {/* Clarity */}
-          <div className="text-center">
-            <div
-              className={`text-2xl font-bold ${getScoreColor(evaluation.scores.clarity)} rounded-lg py-2`}
-            >
-              {evaluation.scores.clarity}
-            </div>
-            <p className="text-xs text-gray-600 mt-1">Clarity</p>
-          </div>
-
-          {/* Completeness */}
-          <div className="text-center">
-            <div
-              className={`text-2xl font-bold ${getScoreColor(evaluation.scores.completeness)} rounded-lg py-2`}
-            >
-              {evaluation.scores.completeness}
-            </div>
-            <p className="text-xs text-gray-600 mt-1">Completeness</p>
-          </div>
-        </div>
-
-        {/* Actual Output */}
-        <div className="pt-3 border-t border-gray-200">
-          <p className="text-xs font-medium text-gray-500 mb-1">Actual Output:</p>
-          <p className="text-sm text-gray-700 line-clamp-3">{evaluation.actual_output}</p>
-        </div>
-
-        {/* Model Info */}
-        <div className="flex items-center justify-between pt-2 border-t border-gray-200">
-          <span className="text-xs text-gray-500">Model: {evaluation.model_used}</span>
-        </div>
+      <div className="divide-y divide-slate-100">
+        <CriterionRow label="Accuracy" score={result.accuracy.score} reasoning={result.accuracy.reasoning} />
+        <CriterionRow label="Clarity" score={result.clarity.score} reasoning={result.clarity.reasoning} />
+        <CriterionRow
+          label="Completeness"
+          score={result.completeness.score}
+          reasoning={result.completeness.reasoning}
+        />
       </div>
     </div>
   );

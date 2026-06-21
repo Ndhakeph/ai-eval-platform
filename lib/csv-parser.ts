@@ -1,137 +1,114 @@
 /**
- * CSV parsing utilities for test case uploads
- * Handles parsing and validation of CSV files containing test cases
+ * Client-side CSV parsing for batch evaluation.
+ *
+ * Parsing happens entirely in the browser (Papa Parse) — nothing is uploaded or
+ * stored. The parsed rows are sent to the live judge endpoint and scored in
+ * memory.
+ *
+ * Expected columns: `prompt`, `output`, and an optional `reference` (the gold
+ * answer to judge against). Header names are normalized, and a couple of common
+ * aliases are accepted so realistic files just work.
  */
 
 import Papa from 'papaparse';
 import { TestCaseCSVRow } from '@/types';
 
-/**
- * Parse a CSV file containing test cases
- *
- * Expected CSV format:
- * prompt,expected_output
- * "What is 2+2?","4"
- * "Explain photosynthesis","Photosynthesis is the process..."
- *
- * @param file - The CSV file to parse
- * @returns Promise<TestCaseCSVRow[]> - Array of parsed test cases
- * @throws Error if file is invalid or parsing fails
- */
+const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+
+/** Map common header aliases to our canonical column names. */
+function canonicalHeader(header: string): string {
+  const h = header.trim().toLowerCase().replace(/\s+/g, '_');
+  if (h === 'actual_output' || h === 'response' || h === 'answer' || h === 'completion') return 'output';
+  if (h === 'expected_output' || h === 'expected' || h === 'gold' || h === 'reference_answer') return 'reference';
+  return h;
+}
+
+export function validateCSVFile(file: File): { valid: boolean; error?: string } {
+  if (!file.name.toLowerCase().endsWith('.csv')) {
+    return { valid: false, error: 'Invalid file type. Please upload a .csv file.' };
+  }
+  if (file.size > MAX_SIZE) {
+    return { valid: false, error: 'File too large. Maximum size is 5MB.' };
+  }
+  return { valid: true };
+}
+
 export async function parseTestCases(file: File): Promise<TestCaseCSVRow[]> {
   return new Promise((resolve, reject) => {
-    // Validate file type
-    if (!file.name.endsWith('.csv')) {
-      reject(new Error('Invalid file type. Please upload a CSV file.'));
+    const validation = validateCSVFile(file);
+    if (!validation.valid) {
+      reject(new Error(validation.error));
       return;
     }
 
-    // Validate file size (max 5MB)
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (file.size > maxSize) {
-      reject(new Error('File too large. Maximum size is 5MB.'));
-      return;
-    }
-
-    Papa.parse<TestCaseCSVRow>(file, {
+    Papa.parse<Record<string, string>>(file, {
       header: true,
       skipEmptyLines: true,
-      transformHeader: (header) => {
-        // Normalize header names (trim whitespace and lowercase)
-        return header.trim().toLowerCase();
-      },
+      transformHeader: canonicalHeader,
       complete: (results) => {
         try {
-          // Validate that we have data
           if (!results.data || results.data.length === 0) {
-            reject(new Error('CSV file is empty or contains no valid data.'));
+            reject(new Error('CSV file is empty or contains no valid rows.'));
             return;
           }
 
-          // Validate and transform each row
-          const testCases: TestCaseCSVRow[] = [];
+          const rows: TestCaseCSVRow[] = [];
           const errors: string[] = [];
 
-          results.data.forEach((row: any, index: number) => {
-            const rowNumber = index + 2; // +2 because index is 0-based and row 1 is header
+          results.data.forEach((row, index) => {
+            const rowNumber = index + 2; // +1 for header, +1 for 1-based display
+            const prompt = (row.prompt ?? '').trim();
+            const output = (row.output ?? '').trim();
+            const reference = (row.reference ?? '').trim();
 
-            // Check for required fields
-            if (!row.prompt || typeof row.prompt !== 'string' || row.prompt.trim() === '') {
-              errors.push(`Row ${rowNumber}: Missing or empty 'prompt' field`);
+            if (!prompt) {
+              errors.push(`Row ${rowNumber}: missing 'prompt'`);
+              return;
+            }
+            if (!output) {
+              errors.push(`Row ${rowNumber}: missing 'output'`);
               return;
             }
 
-            if (!row.expected_output || typeof row.expected_output !== 'string' || row.expected_output.trim() === '') {
-              errors.push(`Row ${rowNumber}: Missing or empty 'expected_output' field`);
-              return;
-            }
-
-            testCases.push({
-              prompt: row.prompt.trim(),
-              expected_output: row.expected_output.trim(),
-            });
+            rows.push({ prompt, output, reference: reference || undefined });
           });
 
-          // If there are validation errors, reject with detailed message
-          if (errors.length > 0) {
-            reject(new Error(`CSV validation failed:\n${errors.join('\n')}`));
+          if (rows.length === 0) {
+            reject(
+              new Error(
+                `No valid rows found. Ensure your CSV has 'prompt' and 'output' columns.\n${errors.join('\n')}`,
+              ),
+            );
             return;
           }
 
-          // If no valid test cases were found
-          if (testCases.length === 0) {
-            reject(new Error('No valid test cases found in CSV file.'));
-            return;
-          }
-
-          resolve(testCases);
-        } catch (error: any) {
-          reject(new Error(`Failed to process CSV data: ${error.message}`));
+          resolve(rows);
+        } catch (error) {
+          reject(new Error(`Failed to process CSV: ${(error as Error).message}`));
         }
       },
-      error: (error: any) => {
-        reject(new Error(`Failed to parse CSV file: ${error.message}`));
-      },
+      error: (error) => reject(new Error(`Failed to parse CSV: ${error.message}`)),
     });
   });
 }
 
-/**
- * Validate CSV file before uploading
- * Checks file type and size without parsing content
- */
-export function validateCSVFile(file: File): { valid: boolean; error?: string } {
-  if (!file.name.endsWith('.csv')) {
-    return { valid: false, error: 'Invalid file type. Please upload a CSV file.' };
-  }
-
-  const maxSize = 5 * 1024 * 1024; // 5MB
-  if (file.size > maxSize) {
-    return { valid: false, error: 'File too large. Maximum size is 5MB.' };
-  }
-
-  return { valid: true };
-}
-
-/**
- * Generate a sample CSV string for download
- * Users can download this as a template
- */
+/** A downloadable starter template demonstrating the expected columns. */
 export function generateSampleCSV(): string {
-  const sampleData = [
+  return Papa.unparse([
     {
-      prompt: 'What is 2 + 2?',
-      expected_output: '4',
+      prompt: 'What is the capital of France?',
+      output: 'The capital of France is Paris.',
+      reference: 'Paris',
     },
     {
-      prompt: 'Explain what photosynthesis is in simple terms.',
-      expected_output: 'Photosynthesis is the process by which plants use sunlight, water, and carbon dioxide to produce oxygen and energy in the form of sugar.',
+      prompt: 'Write a haiku about the ocean.',
+      output: 'Endless blue expanse / waves whisper to the shoreline / salt air fills my lungs',
+      reference: '',
     },
     {
-      prompt: 'Write a haiku about coding.',
-      expected_output: 'Lines of code align\nBugs emerge from the shadows\nDebug through the night',
+      prompt: 'Explain HTTP status code 404 in one sentence.',
+      output: 'A 404 means the server could not find the requested resource.',
+      reference: '404 Not Found indicates the requested resource does not exist on the server.',
     },
-  ];
-
-  return Papa.unparse(sampleData);
+  ]);
 }
