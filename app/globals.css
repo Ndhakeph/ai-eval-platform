@@ -1,25 +1,26 @@
 @import "tailwindcss";
 
 /*
- * One restrained system: a neutral slate base with a single indigo accent.
- * Light theme only — the previous build shipped a dark-mode media query and an
- * Arial body font that fought the intended Geist look; both are removed here so
- * every page renders one coherent way.
+ * Design system: a neutral slate canvas with a single indigo→violet accent,
+ * set in Geist. Depth comes from layered, low-opacity shadows and hairline
+ * rings rather than heavy borders. Light theme only — one coherent look.
  */
 
 :root {
-  --background: #f8fafc; /* slate-50 */
-  --foreground: #0f172a; /* slate-900 */
+  --background: #f7f8fb;
+  --foreground: #0b1120; /* slate-950-ish */
   --accent: #4f46e5;     /* indigo-600 */
+  --accent-2: #7c3aed;   /* violet-600 */
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
-    "Liberation Mono", monospace;
+  /* Geist variables are injected on <html> by the geist package. */
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo,
+    Consolas, "Liberation Mono", monospace;
 }
 
 html {
@@ -27,36 +28,104 @@ html {
 }
 
 body {
-  background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--background);
+  /* Soft, off-screen accent glows give the flat canvas quiet depth. */
+  background-image:
+    radial-gradient(48rem 26rem at 88% -8%, rgba(99, 102, 241, 0.12), transparent 60%),
+    radial-gradient(42rem 22rem at -6% 2%, rgba(124, 58, 237, 0.08), transparent 55%);
+  background-attachment: fixed;
 }
 
-/* Skeleton-loader shimmer used across loading states. */
+@layer components {
+  /* Elevated surface — the base for every panel, card, and chart. */
+  .card {
+    @apply rounded-2xl bg-white ring-1 ring-slate-900/[0.06];
+    box-shadow:
+      0 1px 2px rgba(15, 23, 42, 0.04),
+      0 14px 30px -18px rgba(15, 23, 42, 0.18);
+  }
+
+  .card-hover {
+    @apply transition duration-200 ease-out;
+  }
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 1px 2px rgba(15, 23, 42, 0.05),
+      0 22px 44px -22px rgba(15, 23, 42, 0.28);
+  }
+
+  /* Primary action — the single place the accent gradient is used boldly. */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition duration-200 ease-out;
+    background-image: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+    box-shadow:
+      0 1px 2px rgba(79, 70, 229, 0.35),
+      0 12px 26px -12px rgba(124, 58, 237, 0.6);
+  }
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      0 1px 2px rgba(79, 70, 229, 0.4),
+      0 18px 32px -14px rgba(124, 58, 237, 0.7);
+  }
+  .btn-primary:disabled {
+    @apply cursor-not-allowed opacity-50;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 ring-1 ring-slate-300 transition duration-200 ease-out;
+  }
+  .btn-secondary:hover {
+    @apply bg-slate-50 ring-slate-400;
+    transform: translateY(-1px);
+  }
+  .btn-secondary:disabled {
+    @apply cursor-not-allowed opacity-50;
+    transform: none;
+  }
+
+  /* Small uppercase eyebrow above headings. */
+  .kicker {
+    @apply inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-600;
+  }
+
+  /* Accent-gradient text, used sparingly on a single headline word. */
+  .gradient-text {
+    background-image: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Form controls. */
+  .input-field {
+    @apply w-full resize-y rounded-xl border-0 bg-white px-3.5 py-2.5 text-sm text-slate-900 ring-1 ring-slate-300 transition placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500;
+  }
+}
+
+/* Skeleton-loader shimmer. */
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
-
 .skeleton {
-  background: linear-gradient(
-    90deg,
-    rgb(226 232 240) 25%,
-    rgb(241 245 249) 50%,
-    rgb(226 232 240) 75%
-  );
+  background: linear-gradient(90deg, rgb(226 232 240) 25%, rgb(241 245 249) 50%, rgb(226 232 240) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
 }
 
-/* Subtle entrance for results so live + baked content feels alive. */
+/* Subtle entrance for freshly rendered results. */
 @keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
-
 .animate-fade-in-up {
-  animation: fade-in-up 0.35s ease-out both;
+  animation: fade-in-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
 }

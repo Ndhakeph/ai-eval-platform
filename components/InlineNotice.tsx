@@ -25,7 +25,7 @@ export default function InlineNotice({
 }) {
   const s = STYLES[variant];
   return (
-    <div className={`rounded-xl border p-4 ${s.box}`}>
+    <div className={`rounded-2xl border p-4 ${s.box}`}>
       <div className="flex items-start gap-3">
         <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white text-sm font-bold ${s.icon}`}>
           {s.symbol}

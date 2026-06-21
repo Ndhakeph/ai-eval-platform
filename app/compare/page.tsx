@@ -89,7 +89,11 @@ export default function ComparePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">A/B compare with position-bias check</h1>
+        <span className="kicker">
+          <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+          Pairwise · bias-aware
+        </span>
+        <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">A/B compare with position-bias check</h1>
         <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600">
           LLM judges have a known failure mode: they often favor whichever output is shown first, regardless of quality.
           This tool runs the comparison <strong>both ways</strong> — A-then-B and B-then-A — and flags any disagreement.
@@ -98,7 +102,7 @@ export default function ComparePage() {
       </div>
 
       {/* Input form */}
-      <form onSubmit={submit} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <form onSubmit={submit} className="card space-y-4 p-5">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-slate-900">Input</h2>
           <button type="button" onClick={loadExample} className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
@@ -113,7 +117,7 @@ export default function ComparePage() {
             onChange={(e) => setPrompt(e.target.value)}
             rows={2}
             placeholder="The task both outputs are responding to…"
-            className="w-full resize-y rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+            className="input-field"
           />
         </div>
 
@@ -127,7 +131,7 @@ export default function ComparePage() {
               onChange={(e) => setOutputA(e.target.value)}
               rows={6}
               placeholder="First candidate output…"
-              className="w-full resize-y rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+              className="input-field"
             />
           </div>
           <div>
@@ -139,7 +143,7 @@ export default function ComparePage() {
               onChange={(e) => setOutputB(e.target.value)}
               rows={6}
               placeholder="Second candidate output…"
-              className="w-full resize-y rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+              className="input-field"
             />
           </div>
         </div>
@@ -147,7 +151,7 @@ export default function ComparePage() {
         <button
           type="submit"
           disabled={loading || !prompt.trim() || !outputA.trim() || !outputB.trim()}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300 sm:w-auto"
+          className="btn-primary w-full sm:w-auto"
         >
           {loading ? 'Judging both orders…' : 'Compare (runs both orderings)'}
         </button>
@@ -175,7 +179,7 @@ export default function ComparePage() {
       {loading && (
         <div className="grid gap-4 lg:grid-cols-2">
           {[0, 1].map((i) => (
-            <div key={i} className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
+            <div key={i} className="card space-y-3 p-4">
               <div className="skeleton h-5 w-2/3 rounded" />
               <div className="skeleton h-3 w-full rounded" />
               <div className="skeleton h-3 w-5/6 rounded" />
@@ -189,7 +193,7 @@ export default function ComparePage() {
       {!loading && result && <ComparisonResult comparison={result} />}
 
       {!loading && !result && !notice && (
-        <div className="flex min-h-40 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center">
+        <div className="flex min-h-40 items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white/60 p-8 text-center">
           <p className="text-sm text-slate-400">
             The verdict for both orderings — and any position-bias flag — will appear here.{' '}
             <Link href="/" className="font-medium text-indigo-600 hover:underline">

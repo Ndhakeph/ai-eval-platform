@@ -50,7 +50,7 @@ export default function EvalCard({
   const tone = scoreTone(result.total_score);
 
   return (
-    <div className="animate-fade-in-up rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="card animate-fade-in-up p-5">
       <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-slate-400">

@@ -35,7 +35,7 @@ function OrderingColumn({ ordering }: { ordering: OrderingResult }) {
   const firstLabel = ordering.firstShown;
   const secondLabel = firstLabel === 'A' ? 'B' : 'A';
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4">
+    <div className="card p-4">
       <div className="flex items-center justify-between border-b border-slate-100 pb-3">
         <h4 className="text-sm font-semibold text-slate-900">
           Order: {firstLabel} shown first
@@ -73,7 +73,7 @@ export default function ComparisonResult({ comparison }: { comparison: Compariso
     <div className="animate-fade-in-up space-y-4">
       {/* Verdict banner */}
       {positionBias ? (
-        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4">
+        <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 shadow-[0_10px_30px_-18px_rgba(217,119,6,0.5)]">
           <div className="flex items-start gap-3">
             <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-400 text-sm font-bold text-white">
               !
@@ -91,7 +91,7 @@ export default function ComparisonResult({ comparison }: { comparison: Compariso
           </div>
         </div>
       ) : (
-        <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-4">
+        <div className="rounded-2xl border border-emerald-300 bg-emerald-50 p-4 shadow-[0_10px_30px_-18px_rgba(5,150,105,0.5)]">
           <div className="flex items-start gap-3">
             <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-sm font-bold text-white">
               ✓

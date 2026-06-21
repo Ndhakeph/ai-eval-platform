@@ -152,7 +152,7 @@ export default function UploadForm() {
   return (
     <div className="space-y-6">
       {/* Format help */}
-      <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
+      <div className="card p-4 text-sm text-slate-600">
         <p>
           Upload a CSV with{' '}
           <code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-xs text-slate-800">prompt</code>,{' '}
@@ -180,8 +180,8 @@ export default function UploadForm() {
           const f = e.dataTransfer.files[0];
           if (f) handleFile(f);
         }}
-        className={`rounded-xl border-2 border-dashed p-8 text-center transition-colors ${
-          isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-slate-300 bg-white hover:border-slate-400'
+        className={`rounded-2xl border-2 border-dashed p-10 text-center transition-colors ${
+          isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-slate-300 bg-white/60 hover:border-slate-400 hover:bg-white'
         }`}
       >
         <p className="text-sm text-slate-600">
@@ -225,7 +225,7 @@ export default function UploadForm() {
 
       {/* Parsed preview + run button */}
       {(phase === 'ready' || phase === 'scoring') && rows.length > 0 && (
-        <div className="rounded-xl border border-slate-200 bg-white p-4">
+        <div className="card p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-slate-700">
               Parsed <strong>{rows.length}</strong> row{rows.length !== 1 ? 's' : ''}
@@ -234,11 +234,7 @@ export default function UploadForm() {
               )}
               .
             </p>
-            <button
-              onClick={runEvaluation}
-              disabled={phase === 'scoring'}
-              className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-            >
+            <button onClick={runEvaluation} disabled={phase === 'scoring'} className="btn-primary">
               {phase === 'scoring' ? 'Scoring…' : `Run live evaluation`}
             </button>
           </div>

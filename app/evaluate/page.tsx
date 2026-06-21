@@ -99,7 +99,11 @@ export default function ScorePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Score a single output</h1>
+        <span className="kicker">
+          <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+          Rubric scoring
+        </span>
+        <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Score a single output</h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">
           The judge scores the output you provide on accuracy, clarity, and completeness (0-10 each) with written
           reasoning per criterion. It evaluates exactly what you paste — it never rewrites or regenerates the output.
@@ -108,7 +112,7 @@ export default function ScorePage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Form */}
-        <form onSubmit={submit} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <form onSubmit={submit} className="card space-y-4 p-5">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-slate-900">Input</h2>
             <button type="button" onClick={loadExample} className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
@@ -123,7 +127,7 @@ export default function ScorePage() {
               onChange={(e) => setPrompt(e.target.value)}
               rows={3}
               placeholder="The task or question that was given to the model…"
-              className="w-full resize-y rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+              className="input-field"
             />
           </div>
 
@@ -134,7 +138,7 @@ export default function ScorePage() {
               onChange={(e) => setOutput(e.target.value)}
               rows={5}
               placeholder="The output you want judged…"
-              className="w-full resize-y rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+              className="input-field"
             />
           </div>
 
@@ -145,15 +149,11 @@ export default function ScorePage() {
               onChange={(e) => setReference(e.target.value)}
               rows={3}
               placeholder="A gold answer to judge against. Leave blank to judge on merits alone."
-              className="w-full resize-y rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+              className="input-field"
             />
           </div>
 
-          <button
-            type="submit"
-            disabled={loading || !prompt.trim() || !output.trim()}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-          >
+          <button type="submit" disabled={loading || !prompt.trim() || !output.trim()} className="btn-primary w-full">
             {loading ? 'Judging…' : 'Score output'}
           </button>
         </form>
@@ -179,7 +179,7 @@ export default function ScorePage() {
           )}
 
           {loading && (
-            <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-5">
+            <div className="card space-y-3 p-5">
               <div className="skeleton h-8 w-1/3 rounded" />
               <div className="skeleton h-3 w-full rounded" />
               <div className="skeleton h-3 w-5/6 rounded" />
@@ -191,7 +191,7 @@ export default function ScorePage() {
           {!loading && result && <EvalCard result={result} title={resultTitle} />}
 
           {!loading && !result && !notice && (
-            <div className="flex h-full min-h-48 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center">
+            <div className="flex h-full min-h-48 items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white/60 p-8 text-center">
               <p className="text-sm text-slate-400">
                 Scores and per-criterion reasoning will appear here.{' '}
                 <Link href="/" className="font-medium text-indigo-600 hover:underline">
