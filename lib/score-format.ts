@@ -1,31 +1,56 @@
 /**
  * Shared, dependency-free helpers for presenting scores consistently across
- * every surface. Quality is encoded with a restrained semantic palette
- * (emerald / amber / rose) layered over the slate + indigo base.
+ * every surface. The score scale is the ONLY place colour encodes data:
+ * low (0–4) rust, mid (5–7) ochre, high (8–10) green. Everything else on the
+ * page is ink + paper + petrol.
  */
 
 export interface ScoreTone {
-  /** Text color class. */
+  /** Text colour class. */
   text: string;
-  /** Solid background (for pills/bars). */
+  /** Solid background (for bars/fills). */
   bg: string;
   /** Soft tinted background + text (for chips). */
   soft: string;
-  /** Hex used by Recharts bars. */
+  /** Hex, for inline SVG/Recharts fills. */
   hex: string;
 }
 
+const HIGH: ScoreTone = {
+  text: 'text-score-high',
+  bg: 'bg-score-high',
+  soft: 'bg-score-high/10 text-score-high',
+  hex: '#2F7D55',
+};
+const MID: ScoreTone = {
+  text: 'text-score-mid',
+  bg: 'bg-score-mid',
+  soft: 'bg-score-mid/10 text-score-mid',
+  hex: '#B5862B',
+};
+const LOW: ScoreTone = {
+  text: 'text-score-low',
+  bg: 'bg-score-low',
+  soft: 'bg-score-low/10 text-score-low',
+  hex: '#B14430',
+};
+
 export function scoreTone(score: number): ScoreTone {
-  if (score >= 8) {
-    return { text: 'text-emerald-700', bg: 'bg-emerald-600', soft: 'bg-emerald-50 text-emerald-700', hex: '#059669' };
-  }
-  if (score >= 6) {
-    return { text: 'text-amber-700', bg: 'bg-amber-500', soft: 'bg-amber-50 text-amber-700', hex: '#d97706' };
-  }
-  if (score >= 4) {
-    return { text: 'text-orange-700', bg: 'bg-orange-500', soft: 'bg-orange-50 text-orange-700', hex: '#ea580c' };
-  }
-  return { text: 'text-rose-700', bg: 'bg-rose-600', soft: 'bg-rose-50 text-rose-700', hex: '#e11d48' };
+  if (score >= 8) return HIGH;
+  if (score >= 5) return MID;
+  return LOW;
+}
+
+/** Hex for the score band — convenience for inline styles. */
+export function scoreHex(score: number): string {
+  return scoreTone(score).hex;
+}
+
+/** Short band label for the calibration readout. */
+export function scoreBand(score: number): 'Low' | 'Mid' | 'High' {
+  if (score >= 8) return 'High';
+  if (score >= 5) return 'Mid';
+  return 'Low';
 }
 
 /** One decimal place for display; the stored value keeps full precision. */

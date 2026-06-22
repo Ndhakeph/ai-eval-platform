@@ -1,131 +1,200 @@
 @import "tailwindcss";
 
 /*
- * Design system: a neutral slate canvas with a single indigo→violet accent,
- * set in Geist. Depth comes from layered, low-opacity shadows and hairline
- * rings rather than heavy borders. Light theme only — one coherent look.
+ * Design system — "Measurement Bench".
+ *
+ * A calibrated instrument readout: warm lab-notebook paper, ink, hairline
+ * rules, and a single petrol accent used sparingly. Colour encodes data in
+ * exactly one place — the score scale (low / mid / high). No gradients, no
+ * glow, no purple. Surfaces are bordered and flat; depth is reserved for the
+ * one hero scorecard.
  */
 
 :root {
-  --background: #f7f8fb;
-  --foreground: #0b1120; /* slate-950-ish */
-  --accent: #4f46e5;     /* indigo-600 */
-  --accent-2: #7c3aed;   /* violet-600 */
+  --paper: #f4f4f1; /* app background — warm light grey */
+  --surface: #fcfcfa; /* cards / panels */
+  --ink: #15191c; /* primary text */
+  --muted: #6a6f6b; /* labels / secondary text */
+  --hairline: #dedfd9; /* borders, dividers, scale ticks */
+  --petrol: #0e6e73; /* the single brand colour */
+  --petrol-pressed: #0a565a; /* pressed / text-on-accent */
+  --score-low: #b14430; /* 0–4 */
+  --score-mid: #b5862b; /* 5–7 */
+  --score-high: #2f7d55; /* 8–10 */
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  /* Geist variables are injected on <html> by the geist package. */
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system,
-    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-hairline: var(--hairline);
+  --color-petrol: var(--petrol);
+  --color-petrol-pressed: var(--petrol-pressed);
+  --color-score-low: var(--score-low);
+  --color-score-mid: var(--score-mid);
+  --color-score-high: var(--score-high);
+
+  --color-background: var(--paper);
+  --color-foreground: var(--ink);
+
+  /* Display = Archivo; body/UI = Geist Sans; data = Geist Mono. */
+  --font-display: var(--font-archivo), var(--font-geist-sans), sans-serif;
+  --font-sans: var(--font-geist-sans), sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo,
-    Consolas, "Liberation Mono", monospace;
+    Consolas, monospace;
 }
 
 html {
-  scroll-behavior: smooth;
+  background-color: var(--paper);
 }
 
 body {
-  color: var(--foreground);
+  color: var(--ink);
+  background-color: var(--paper);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--background);
-  /* Soft, off-screen accent glows give the flat canvas quiet depth. */
-  background-image:
-    radial-gradient(48rem 26rem at 88% -8%, rgba(99, 102, 241, 0.12), transparent 60%),
-    radial-gradient(42rem 22rem at -6% 2%, rgba(124, 58, 237, 0.08), transparent 55%);
-  background-attachment: fixed;
+}
+
+/* Headings use the display face, tightly tracked. */
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+/* Keyboard focus — petrol ring, everywhere. */
+:focus-visible {
+  outline: 2px solid var(--petrol);
+  outline-offset: 2px;
+  border-radius: 3px;
 }
 
 @layer components {
-  /* Elevated surface — the base for every panel, card, and chart. */
+  /* Bordered, flat surface — the base for every panel and card. */
   .card {
-    @apply rounded-2xl bg-white ring-1 ring-slate-900/[0.06];
-    box-shadow:
-      0 1px 2px rgba(15, 23, 42, 0.04),
-      0 14px 30px -18px rgba(15, 23, 42, 0.18);
+    @apply rounded-md border border-hairline bg-surface;
   }
 
-  .card-hover {
-    @apply transition duration-200 ease-out;
-  }
-  .card-hover:hover {
-    transform: translateY(-2px);
+  /* The single elevated surface — the hero scorecard. One tight, low shadow. */
+  .card-elevated {
+    @apply rounded-lg border border-hairline bg-surface;
     box-shadow:
-      0 1px 2px rgba(15, 23, 42, 0.05),
-      0 22px 44px -22px rgba(15, 23, 42, 0.28);
+      0 1px 2px rgba(21, 25, 28, 0.04),
+      0 18px 40px -28px rgba(21, 25, 28, 0.22);
   }
 
-  /* Primary action — the single place the accent gradient is used boldly. */
+  /* Primary action — solid petrol, no gradient, no pill. */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition duration-200 ease-out;
-    background-image: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
-    box-shadow:
-      0 1px 2px rgba(79, 70, 229, 0.35),
-      0 12px 26px -12px rgba(124, 58, 237, 0.6);
+    @apply inline-flex items-center justify-center gap-2 rounded-md bg-petrol px-4 py-2.5 text-sm font-semibold text-white transition-colors duration-150;
   }
   .btn-primary:hover {
-    transform: translateY(-1px);
-    box-shadow:
-      0 1px 2px rgba(79, 70, 229, 0.4),
-      0 18px 32px -14px rgba(124, 58, 237, 0.7);
+    @apply bg-petrol-pressed;
   }
   .btn-primary:disabled {
     @apply cursor-not-allowed opacity-50;
-    transform: none;
-    box-shadow: none;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 ring-1 ring-slate-300 transition duration-200 ease-out;
+    @apply inline-flex items-center justify-center gap-2 rounded-md border border-hairline bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-colors duration-150;
   }
   .btn-secondary:hover {
-    @apply bg-slate-50 ring-slate-400;
-    transform: translateY(-1px);
+    @apply border-petrol text-petrol;
   }
   .btn-secondary:disabled {
     @apply cursor-not-allowed opacity-50;
-    transform: none;
   }
 
   /* Small uppercase eyebrow above headings. */
   .kicker {
-    @apply inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-600;
-  }
-
-  /* Accent-gradient text, used sparingly on a single headline word. */
-  .gradient-text {
-    background-image: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    @apply inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-petrol;
   }
 
   /* Form controls. */
   .input-field {
-    @apply w-full resize-y rounded-xl border-0 bg-white px-3.5 py-2.5 text-sm text-slate-900 ring-1 ring-slate-300 transition placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500;
+    @apply w-full resize-y rounded-md border border-hairline bg-surface px-3.5 py-2.5 text-sm text-ink transition placeholder:text-muted;
+  }
+  .input-field:focus {
+    outline: none;
+    border-color: var(--petrol);
+    box-shadow: 0 0 0 3px rgba(14, 110, 115, 0.18);
+  }
+  .input-field:focus-visible {
+    outline: none;
   }
 }
 
-/* Skeleton-loader shimmer. */
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+/*
+ * Motion — restrained. The calibration readout settles to its value once when
+ * it mounts; nothing else moves on load. Reduced motion disables all of it.
+ */
+@keyframes calibrate-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
 }
-.skeleton {
-  background: linear-gradient(90deg, rgb(226 232 240) 25%, rgb(241 245 249) 50%, rgb(226 232 240) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
+.cal-fill {
+  transform-origin: left center;
+}
+.cal-animate .cal-fill {
+  animation: calibrate-fill 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* Subtle entrance for freshly rendered results. */
+@keyframes needle-settle {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.cal-animate .cal-needle {
+  animation: needle-settle 500ms 140ms ease-out both;
+}
+
+/* A single subtle entrance for freshly produced live results. */
 @keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .animate-fade-in-up {
-  animation: fade-in-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: fade-in-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Loading placeholder — a quiet hairline pulse, no moving gradient. */
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+.skeleton {
+  background-color: var(--hairline);
+  animation: pulse-soft 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }

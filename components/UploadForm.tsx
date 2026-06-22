@@ -152,15 +152,15 @@ export default function UploadForm() {
   return (
     <div className="space-y-6">
       {/* Format help */}
-      <div className="card p-4 text-sm text-slate-600">
+      <div className="card p-4 text-sm text-muted">
         <p>
           Upload a CSV with{' '}
-          <code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-xs text-slate-800">prompt</code>,{' '}
-          <code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-xs text-slate-800">output</code>, and an
+          <code className="rounded border border-hairline bg-paper px-1 py-0.5 font-mono text-xs text-ink">prompt</code>,{' '}
+          <code className="rounded border border-hairline bg-paper px-1 py-0.5 font-mono text-xs text-ink">output</code>, and an
           optional{' '}
-          <code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-xs text-slate-800">reference</code> column.
+          <code className="rounded border border-hairline bg-paper px-1 py-0.5 font-mono text-xs text-ink">reference</code> column.
           Up to {MAX_ROWS} rows are scored live per run.{' '}
-          <button onClick={downloadSample} className="font-medium text-indigo-600 hover:text-indigo-700 hover:underline">
+          <button onClick={downloadSample} className="font-medium text-petrol hover:text-petrol-pressed hover:underline">
             Download a sample CSV
           </button>
           .
@@ -180,20 +180,20 @@ export default function UploadForm() {
           const f = e.dataTransfer.files[0];
           if (f) handleFile(f);
         }}
-        className={`rounded-2xl border-2 border-dashed p-10 text-center transition-colors ${
-          isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-slate-300 bg-white/60 hover:border-slate-400 hover:bg-white'
+        className={`rounded-md border-2 border-dashed p-10 text-center transition-colors ${
+          isDragging ? 'border-petrol bg-petrol/5' : 'border-hairline bg-surface hover:border-muted'
         }`}
       >
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-muted">
           <button
             onClick={() => inputRef.current?.click()}
-            className="font-semibold text-indigo-600 hover:text-indigo-700"
+            className="font-semibold text-petrol hover:text-petrol-pressed"
           >
             Choose a CSV file
           </button>{' '}
           or drag and drop
         </p>
-        <p className="mt-1 text-xs text-slate-400">CSV up to 5MB{fileName ? ` · ${fileName}` : ''}</p>
+        <p className="mt-1 font-mono text-xs text-muted">CSV up to 5MB{fileName ? ` · ${fileName}` : ''}</p>
         <input
           ref={inputRef}
           type="file"
@@ -215,7 +215,7 @@ export default function UploadForm() {
           action={
             <Link
               href="/"
-              className="inline-flex rounded-md bg-white px-3 py-1.5 text-sm font-medium text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50"
+              className="inline-flex rounded-md border border-hairline bg-surface px-3 py-1.5 text-sm font-medium text-ink hover:border-petrol hover:text-petrol"
             >
               View the sample dashboard →
             </Link>
@@ -227,10 +227,10 @@ export default function UploadForm() {
       {(phase === 'ready' || phase === 'scoring') && rows.length > 0 && (
         <div className="card p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-slate-700">
+            <p className="text-sm text-ink">
               Parsed <strong>{rows.length}</strong> row{rows.length !== 1 ? 's' : ''}
               {rows.length > MAX_ROWS && (
-                <span className="text-slate-500"> — the first {MAX_ROWS} will be scored</span>
+                <span className="text-muted"> — the first {MAX_ROWS} will be scored</span>
               )}
               .
             </p>
@@ -254,11 +254,11 @@ export default function UploadForm() {
       {phase === 'done' && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-slate-900">
+            <h3 className="text-sm font-semibold text-ink">
               Scored {scored.length} row{scored.length !== 1 ? 's' : ''}
-              {skipped > 0 && <span className="font-normal text-slate-500"> · {skipped} skipped</span>}
+              {skipped > 0 && <span className="font-normal text-muted"> · {skipped} skipped</span>}
             </h3>
-            <button onClick={reset} className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
+            <button onClick={reset} className="text-sm font-medium text-petrol hover:text-petrol-pressed">
               Start over
             </button>
           </div>

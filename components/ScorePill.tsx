@@ -21,9 +21,9 @@ export default function ScorePill({ score, outOfTen = false, size = 'md' }: Scor
       : 'px-2 py-0.5 text-sm';
 
   return (
-    <span className={`inline-flex items-baseline gap-0.5 rounded-md font-semibold tabular-nums ${tone.soft} ${sizing}`}>
+    <span className={`inline-flex items-baseline gap-0.5 rounded font-mono font-semibold tabular-nums ${tone.soft} ${sizing}`}>
       {formatScore(score)}
-      {outOfTen && <span className="text-[0.7em] font-medium opacity-60">/10</span>}
+      {outOfTen && <span className="text-[0.7em] font-medium opacity-70">/10</span>}
     </span>
   );
 }

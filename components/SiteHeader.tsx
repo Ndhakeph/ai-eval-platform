@@ -1,8 +1,9 @@
 'use client';
 
 /**
- * App-wide header + primary navigation. One coherent chrome across all pages,
- * with the active tab highlighted via the current pathname.
+ * App-wide header + primary navigation. One coherent chrome across all pages:
+ * a tick-scale wordmark in ink + petrol, and a flat nav where the active tab is
+ * marked with a petrol underline (no pills, no segmented control).
  */
 
 import Link from 'next/link';
@@ -15,6 +16,21 @@ const NAV = [
   { href: '/upload', label: 'Batch CSV' },
 ];
 
+/** A minimal calibration-scale glyph: a ruler baseline with one petrol needle. */
+function ScaleMark() {
+  return (
+    <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true">
+      <line x1="3" y1="18" x2="23" y2="18" stroke="#15191C" strokeWidth="1.6" strokeLinecap="round" />
+      {[3, 7, 11, 15, 19, 23].map((x) => (
+        <line key={x} x1={x} y1="18" x2={x} y2={x === 15 ? 18 : 14} stroke="#15191C" strokeWidth="1.4" strokeLinecap="round" />
+      ))}
+      {/* The measured value — a petrol needle at one tick. */}
+      <line x1="15" y1="7" x2="15" y2="18" stroke="#0E6E73" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="15" cy="7" r="2" fill="#0E6E73" />
+    </svg>
+  );
+}
+
 export default function SiteHeader() {
   const pathname = usePathname();
 
@@ -22,25 +38,20 @@ export default function SiteHeader() {
     href === '/' ? pathname === '/' : pathname.startsWith(href);
 
   return (
-    <header className="sticky top-0 z-20 border-b border-slate-900/[0.06] bg-white/75 backdrop-blur-xl">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between gap-4">
-          <Link href="/" className="group flex items-center gap-2.5">
-            <span className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-[0_6px_16px_-6px_rgba(124,58,237,0.7)] transition-transform duration-200 group-hover:scale-105">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M4 14.5 9 19.5 20 6.5" stroke="white" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M4 8.5 6.2 10.7" stroke="white" strokeOpacity="0.55" strokeWidth="2.2" strokeLinecap="round" />
-              </svg>
-            </span>
+    <header className="sticky top-0 z-20 border-b border-hairline bg-surface">
+      <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
+        <div className="flex flex-col gap-1 py-3 sm:h-16 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:py-0">
+          <Link href="/" className="flex items-center gap-2.5">
+            <ScaleMark />
             <span className="flex flex-col leading-none">
-              <span className="text-[15px] font-semibold tracking-tight text-slate-900">Eval Platform</span>
-              <span className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.18em] text-slate-400">
+              <span className="text-[15px] font-semibold tracking-tight text-ink">Eval Bench</span>
+              <span className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.18em] text-muted">
                 LLM-as-Judge
               </span>
             </span>
           </Link>
 
-          <nav className="flex items-center gap-0.5 rounded-full bg-slate-100/80 p-1 ring-1 ring-slate-900/[0.04]">
+          <nav className="flex w-full items-center justify-between gap-1 overflow-x-auto sm:w-auto sm:justify-end sm:gap-2">
             {NAV.map((item) => {
               const active = isActive(item.href);
               return (
@@ -48,10 +59,10 @@ export default function SiteHeader() {
                   key={item.href}
                   href={item.href}
                   aria-current={active ? 'page' : undefined}
-                  className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200 ${
+                  className={`whitespace-nowrap border-b-2 px-1 py-1 text-xs font-medium transition-colors duration-150 sm:px-2.5 sm:text-sm ${
                     active
-                      ? 'bg-white text-indigo-700 shadow-[0_1px_2px_rgba(15,23,42,0.06),0_4px_10px_-6px_rgba(15,23,42,0.25)]'
-                      : 'text-slate-500 hover:text-slate-900'
+                      ? 'border-petrol text-petrol'
+                      : 'border-transparent text-muted hover:text-ink'
                   }`}
                 >
                   {item.label}

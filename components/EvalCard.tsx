@@ -1,44 +1,19 @@
 'use client';
 
 /**
- * Detailed result card for a single scored output: the headline total plus each
- * criterion's score, a proportional bar, and the judge's written reasoning.
- * Shared by the Score Output page (live results) and the dashboard showcase.
+ * Detailed result card for a single scored output: the headline total rendered
+ * on the calibration scale, then each criterion as a calibrated bar with the
+ * judge's written reasoning. Shared by the Score Output page (live results) and
+ * the dashboard showcase.
  */
 
 import { ScoredEvaluation } from '@/types';
-import { scoreTone, formatScore } from '@/lib/score-format';
+import { CalibrationReadout, CriterionBar } from './CalibrationScale';
 
 type ScoreLike = Pick<
   ScoredEvaluation,
   'accuracy' | 'clarity' | 'completeness' | 'total_score' | 'model_used'
 >;
-
-function CriterionRow({
-  label,
-  score,
-  reasoning,
-}: {
-  label: string;
-  score: number;
-  reasoning: string;
-}) {
-  const tone = scoreTone(score);
-  return (
-    <div className="py-3">
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-slate-700">{label}</span>
-        <span className={`text-sm font-semibold tabular-nums ${tone.text}`}>
-          {formatScore(score)}<span className="text-xs text-slate-400">/10</span>
-        </span>
-      </div>
-      <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-        <div className={`h-full rounded-full ${tone.bg}`} style={{ width: `${(score / 10) * 100}%` }} />
-      </div>
-      <p className="mt-2 text-sm leading-relaxed text-slate-600">{reasoning}</p>
-    </div>
-  );
-}
 
 export default function EvalCard({
   result,
@@ -47,31 +22,27 @@ export default function EvalCard({
   result: ScoreLike;
   title?: string;
 }) {
-  const tone = scoreTone(result.total_score);
-
   return (
     <div className="card animate-fade-in-up p-5">
-      <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
+      <div className="flex items-start justify-between gap-4 border-b border-hairline pb-4">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted">
             {title ?? 'Evaluation result'}
           </p>
-          <p className="mt-1 text-sm text-slate-500">
-            Judged by <span className="font-mono text-slate-700">{result.model_used}</span>
+          <p className="mt-1 text-sm text-muted">
+            Judged by <span className="font-mono text-ink">{result.model_used}</span>
           </p>
-        </div>
-        <div className="text-right">
-          <div className={`text-3xl font-bold tabular-nums ${tone.text}`}>
-            {formatScore(result.total_score)}
-          </div>
-          <div className="text-xs font-medium uppercase tracking-wide text-slate-400">Total / 10</div>
         </div>
       </div>
 
-      <div className="divide-y divide-slate-100">
-        <CriterionRow label="Accuracy" score={result.accuracy.score} reasoning={result.accuracy.reasoning} />
-        <CriterionRow label="Clarity" score={result.clarity.score} reasoning={result.clarity.reasoning} />
-        <CriterionRow
+      <div className="border-b border-hairline py-5">
+        <CalibrationReadout score={result.total_score} />
+      </div>
+
+      <div className="divide-y divide-hairline">
+        <CriterionBar label="Accuracy" score={result.accuracy.score} reasoning={result.accuracy.reasoning} />
+        <CriterionBar label="Clarity" score={result.clarity.score} reasoning={result.clarity.reasoning} />
+        <CriterionBar
           label="Completeness"
           score={result.completeness.score}
           reasoning={result.completeness.reasoning}

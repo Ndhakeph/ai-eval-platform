@@ -90,11 +90,11 @@ export default function ComparePage() {
     <div className="space-y-6">
       <div>
         <span className="kicker">
-          <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+          <span className="h-1.5 w-1.5 bg-petrol" />
           Pairwise · bias-aware
         </span>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">A/B compare with position-bias check</h1>
-        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600">
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink sm:text-3xl">A/B compare with position-bias check</h1>
+        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted">
           LLM judges have a known failure mode: they often favor whichever output is shown first, regardless of quality.
           This tool runs the comparison <strong>both ways</strong> — A-then-B and B-then-A — and flags any disagreement.
           A verdict you can trust should survive the swap.
@@ -104,14 +104,14 @@ export default function ComparePage() {
       {/* Input form */}
       <form onSubmit={submit} className="card space-y-4 p-5">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-900">Input</h2>
-          <button type="button" onClick={loadExample} className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
+          <h2 className="text-sm font-semibold text-ink">Input</h2>
+          <button type="button" onClick={loadExample} className="text-sm font-medium text-petrol hover:text-petrol-pressed">
             Load an example
           </button>
         </div>
 
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-700">Prompt</label>
+          <label className="mb-1.5 block text-sm font-medium text-ink">Prompt</label>
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
@@ -123,8 +123,8 @@ export default function ComparePage() {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-slate-700">
-              <span className="inline-flex rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-700">Output A</span>
+            <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink">
+              <span className="inline-flex rounded bg-petrol/10 px-2 py-0.5 text-xs font-semibold text-petrol">Output A</span>
             </label>
             <textarea
               value={outputA}
@@ -135,8 +135,8 @@ export default function ComparePage() {
             />
           </div>
           <div>
-            <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-slate-700">
-              <span className="inline-flex rounded-full bg-slate-800 px-2 py-0.5 text-xs font-semibold text-white">Output B</span>
+            <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink">
+              <span className="inline-flex rounded bg-ink px-2 py-0.5 text-xs font-semibold text-surface">Output B</span>
             </label>
             <textarea
               value={outputB}
@@ -167,7 +167,7 @@ export default function ComparePage() {
             notice.offerSample ? (
               <button
                 onClick={showBakedSample}
-                className="inline-flex rounded-md bg-white px-3 py-1.5 text-sm font-medium text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50"
+                className="inline-flex rounded-md border border-hairline bg-surface px-3 py-1.5 text-sm font-medium text-ink hover:border-petrol hover:text-petrol"
               >
                 Show a sample comparison →
               </button>
@@ -193,10 +193,10 @@ export default function ComparePage() {
       {!loading && result && <ComparisonResult comparison={result} />}
 
       {!loading && !result && !notice && (
-        <div className="flex min-h-40 items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white/60 p-8 text-center">
-          <p className="text-sm text-slate-400">
+        <div className="flex min-h-40 items-center justify-center rounded-md border border-dashed border-hairline bg-surface p-8 text-center">
+          <p className="text-sm text-muted">
             The verdict for both orderings — and any position-bias flag — will appear here.{' '}
-            <Link href="/" className="font-medium text-indigo-600 hover:underline">
+            <Link href="/" className="font-medium text-petrol hover:underline">
               See sample data
             </Link>
             .

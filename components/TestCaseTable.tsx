@@ -3,7 +3,8 @@
 /**
  * Data-dense results table for a list of scored evaluations. Each row expands to
  * reveal the output and the judge's per-criterion reasoning. Used by the
- * dashboard and the batch-CSV results view.
+ * dashboard and the batch-CSV results view. Figures are mono + tabular so the
+ * score columns align like an instrument readout.
  */
 
 import { Fragment, useState } from 'react';
@@ -14,7 +15,7 @@ import ScorePill from './ScorePill';
 function HeaderCell({ children, align = 'left' }: { children: React.ReactNode; align?: 'left' | 'center' }) {
   return (
     <th
-      className={`px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 ${
+      className={`px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted ${
         align === 'center' ? 'text-center' : 'text-left'
       }`}
     >
@@ -28,7 +29,7 @@ export default function ResultsTable({ rows }: { rows: ScoredEvaluation[] }) {
 
   if (rows.length === 0) {
     return (
-      <div className="card p-8 text-center text-sm text-slate-500">
+      <div className="card p-8 text-center text-sm text-muted">
         No evaluations to show yet.
       </div>
     );
@@ -37,8 +38,8 @@ export default function ResultsTable({ rows }: { rows: ScoredEvaluation[] }) {
   return (
     <div className="card overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-slate-200">
-          <thead className="bg-slate-50">
+        <table className="min-w-full divide-y divide-hairline">
+          <thead className="bg-paper">
             <tr>
               <HeaderCell>Domain</HeaderCell>
               <HeaderCell>Prompt</HeaderCell>
@@ -48,7 +49,7 @@ export default function ResultsTable({ rows }: { rows: ScoredEvaluation[] }) {
               <HeaderCell align="center">Total</HeaderCell>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-hairline">
             {rows.map((row) => {
               const open = expanded === row.id;
               const tone = scoreTone(row.total_score);
@@ -56,41 +57,41 @@ export default function ResultsTable({ rows }: { rows: ScoredEvaluation[] }) {
                 <Fragment key={row.id}>
                   <tr
                     onClick={() => setExpanded(open ? null : row.id)}
-                    className="cursor-pointer transition-colors hover:bg-slate-50"
+                    className="cursor-pointer transition-colors hover:bg-paper"
                   >
                     <td className="whitespace-nowrap px-4 py-3">
-                      <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                      <span className="inline-flex rounded border border-hairline bg-paper px-2 py-0.5 text-xs font-medium text-muted">
                         {row.domain}
                       </span>
                     </td>
-                    <td className="max-w-md px-4 py-3 text-sm text-slate-700">
+                    <td className="max-w-md px-4 py-3 text-sm text-ink">
                       <span className="line-clamp-1">{row.prompt}</span>
                     </td>
                     <td className="px-4 py-3 text-center"><ScorePill score={row.accuracy.score} size="sm" /></td>
                     <td className="px-4 py-3 text-center"><ScorePill score={row.clarity.score} size="sm" /></td>
                     <td className="px-4 py-3 text-center"><ScorePill score={row.completeness.score} size="sm" /></td>
-                    <td className={`px-4 py-3 text-center text-sm font-bold tabular-nums ${tone.text}`}>
+                    <td className={`px-4 py-3 text-center font-mono text-sm font-bold tabular-nums ${tone.text}`}>
                       {formatScore(row.total_score)}
                     </td>
                   </tr>
                   {open && (
-                    <tr className="bg-slate-50/60">
+                    <tr className="bg-paper">
                       <td colSpan={6} className="px-4 py-4">
                         <div className="space-y-3 text-sm">
                           <div>
-                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Output</p>
-                            <p className="mt-1 whitespace-pre-wrap rounded-lg bg-white p-3 font-mono text-xs text-slate-700 ring-1 ring-slate-200">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-muted">Output</p>
+                            <p className="mt-1 whitespace-pre-wrap rounded-md border border-hairline bg-surface p-3 font-mono text-xs text-ink">
                               {row.output}
                             </p>
                           </div>
                           <div className="grid gap-3 sm:grid-cols-3">
                             {(['accuracy', 'clarity', 'completeness'] as const).map((c) => (
-                              <div key={c} className="rounded-lg bg-white p-3 ring-1 ring-slate-200">
+                              <div key={c} className="rounded-md border border-hairline bg-surface p-3">
                                 <div className="flex items-center justify-between">
-                                  <span className="text-xs font-semibold capitalize text-slate-600">{c}</span>
+                                  <span className="text-xs font-semibold capitalize text-ink">{c}</span>
                                   <ScorePill score={row[c].score} size="sm" />
                                 </div>
-                                <p className="mt-1.5 text-xs leading-relaxed text-slate-600">{row[c].reasoning}</p>
+                                <p className="mt-1.5 text-xs leading-relaxed text-muted">{row[c].reasoning}</p>
                               </div>
                             ))}
                           </div>

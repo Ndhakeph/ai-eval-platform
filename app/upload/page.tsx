@@ -11,11 +11,11 @@ export default function BatchPage() {
     <div className="space-y-6">
       <div>
         <span className="kicker">
-          <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+          <span className="h-1.5 w-1.5 bg-petrol" />
           Bulk · concurrent
         </span>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Batch evaluation from CSV</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink sm:text-3xl">Batch evaluation from CSV</h1>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">
           Score many outputs at once. Your file is parsed locally and the rows are judged concurrently — no database,
           no upload. Results stay in this session.
         </p>

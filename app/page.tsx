@@ -1,73 +1,36 @@
 /**
- * Dashboard / home. Renders the baked batch evaluation set: a hero with a live
- * score gauge, summary stats, Recharts visualizations, and a data-dense results
- * table — entirely from sample data, no backend, instant on first load.
+ * Dashboard / home. The hero shows the tool actually working — a real sample
+ * model output (the specimen) beside its rubric verdict on the calibration
+ * scale — then the position-bias audit run both ways. Below: summary stats,
+ * the score charts, and a data-dense results table. Everything renders from
+ * baked sample data, no backend, instant on first load.
  */
 
 import Link from 'next/link';
 import {
   batchResults,
+  singleScoringExamples,
+  comparisonExamples,
   getDashboardStats,
   getCriterionAverages,
   getScoreDistribution,
   getDomainAverages,
 } from '@/lib/sample-data';
 import {
-  ScoreGauge,
   CriterionAverageChart,
   ScoreDistributionChart,
   DomainAverageChart,
 } from '@/components/ScoreChart';
+import { CalibrationReadout, CriterionBar } from '@/components/CalibrationScale';
+import ComparisonResult from '@/components/ComparisonResult';
 import ResultsTable from '@/components/TestCaseTable';
 
-/* Minimal inline stroke icons — no icon dependency. */
-const iconProps = {
-  width: 18,
-  height: 18,
-  viewBox: '0 0 24 24',
-  fill: 'none',
-  stroke: 'currentColor',
-  strokeWidth: 1.8,
-  strokeLinecap: 'round' as const,
-  strokeLinejoin: 'round' as const,
-};
-
-const Icons = {
-  stack: (
-    <svg {...iconProps}><path d="M12 3 3 8l9 5 9-5-9-5Z" /><path d="m3 13 9 5 9-5" /></svg>
-  ),
-  target: (
-    <svg {...iconProps}><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="3.2" /></svg>
-  ),
-  scale: (
-    <svg {...iconProps}><path d="M12 4v16" /><path d="M5 7h14" /><path d="m5 7-2.5 5a3 3 0 0 0 5 0L5 7Z" /><path d="m19 7-2.5 5a3 3 0 0 0 5 0L19 7Z" /></svg>
-  ),
-  alert: (
-    <svg {...iconProps}><path d="M10.3 4.3 2.5 18a1.8 1.8 0 0 0 1.6 2.7h15.8A1.8 1.8 0 0 0 21.5 18L13.7 4.3a1.9 1.9 0 0 0-3.4 0Z" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
-  ),
-};
-
-function StatCard({
-  label,
-  value,
-  hint,
-  icon,
-}: {
-  label: string;
-  value: string;
-  hint: string;
-  icon: React.ReactNode;
-}) {
+function StatTile({ label, value, hint }: { label: string; value: string; hint: string }) {
   return (
-    <div className="card card-hover p-5">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-slate-500">{label}</p>
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
-          {icon}
-        </span>
-      </div>
-      <p className="mt-3 text-3xl font-bold tracking-tight text-slate-900 tabular-nums">{value}</p>
-      <p className="mt-1 text-xs text-slate-400">{hint}</p>
+    <div className="card p-5">
+      <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted">{label}</p>
+      <p className="mt-3 font-mono text-3xl font-semibold tracking-tight text-ink tabular-nums">{value}</p>
+      <p className="mt-1 text-xs text-muted">{hint}</p>
     </div>
   );
 }
@@ -78,73 +41,106 @@ export default function DashboardPage() {
   const distribution = getScoreDistribution();
   const domainAverages = getDomainAverages();
 
+  // The hero specimen: a clean-looking answer that is quietly wrong, so the
+  // instrument visibly separates "well-presented" from "correct".
+  const specimen =
+    singleScoringExamples.find((e) => e.id === 'single-math-linear') ?? singleScoringExamples[0];
+  // A baked comparison that demonstrates position bias for the audit panel.
+  const biasCase = comparisonExamples.find((c) => c.positionBias) ?? comparisonExamples[0];
+
   return (
-    <div className="space-y-10">
-      {/* Hero */}
-      <section className="card overflow-hidden">
-        <div className="grid gap-8 p-6 sm:p-8 lg:grid-cols-[1.55fr_1fr] lg:items-center">
-          <div>
-            <span className="kicker">
-              <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
-              LLM-as-Judge · Stateless
+    <div className="space-y-12">
+      {/* Hero — the product working: a specimen under measurement on the bench. */}
+      <section className="card-elevated overflow-hidden">
+        <div className="border-b border-hairline p-6 sm:p-8">
+          <span className="kicker">LLM-as-judge · stateless</span>
+          <h1 className="mt-3 max-w-3xl text-3xl font-semibold leading-tight tracking-tight text-ink sm:text-4xl">
+            Score model outputs against a rubric — and check the judge for bias.
+          </h1>
+          <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-muted">
+            A pre-computed run across {stats.domainCount} domains renders instantly, with no database. Then
+            judge your own outputs live: rubric scoring on accuracy, clarity, and completeness, or a pairwise
+            comparison that runs both orderings to catch position bias.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link href="/evaluate" className="btn-primary">
+              Score a single output
+              <span aria-hidden>→</span>
+            </Link>
+            <Link href="/compare" className="btn-secondary">
+              A/B compare with bias check
+            </Link>
+          </div>
+          <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-xs text-muted">
+            <span className="inline-flex items-center gap-2">
+              <span className="h-1.5 w-1.5 bg-petrol" /> no database
             </span>
-            <h1 className="mt-3 text-3xl font-bold leading-tight tracking-tight text-slate-900 sm:text-4xl">
-              Score and compare LLM outputs,
-              <br className="hidden sm:block" /> with <span className="gradient-text">bias built in</span> to the method.
-            </h1>
-            <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-slate-600">
-              A pre-computed evaluation run across {stats.domainCount} domains — judged on accuracy, clarity, and
-              completeness. It renders instantly with no database. Then judge your own outputs live: rubric scoring,
-              or pairwise comparison with explicit position-bias detection.
+            <span className="inline-flex items-center gap-2">
+              <span className="h-1.5 w-1.5 bg-petrol" /> works with no API key
+            </span>
+            <span className="inline-flex items-center gap-2">
+              <span className="h-1.5 w-1.5 bg-petrol" /> deployed on Vercel
+            </span>
+          </div>
+        </div>
+
+        {/* The bench: specimen on the left, calibrated verdict on the right. */}
+        <div className="grid gap-px bg-hairline lg:grid-cols-[1fr_1.05fr]">
+          <div className="bg-surface p-6 sm:p-8">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Specimen</span>
+              <span className="inline-flex rounded border border-hairline bg-paper px-2 py-0.5 text-xs font-medium text-muted">
+                {specimen.domain}
+              </span>
+            </div>
+            <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-muted">Prompt</p>
+            <p className="mt-1 text-sm leading-relaxed text-ink">{specimen.prompt}</p>
+            <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-muted">Model output</p>
+            <p className="mt-1 whitespace-pre-wrap rounded-md border border-hairline bg-paper p-3 font-mono text-xs leading-relaxed text-ink">
+              {specimen.output}
             </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/evaluate" className="btn-primary">
-                Score a single output
-                <span aria-hidden>→</span>
-              </Link>
-              <Link href="/compare" className="btn-secondary">
-                A/B compare with bias check
-              </Link>
-            </div>
-            <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-400">
-              <span className="inline-flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> No database
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Works with no API key
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Deployed on Vercel
-              </span>
-            </div>
+            <p className="mt-4 text-xs text-muted">
+              Judged by <span className="font-mono text-ink">{specimen.model_used}</span> — the output is scored
+              as-is, never regenerated.
+            </p>
           </div>
 
-          <div className="flex flex-col items-center justify-center rounded-2xl bg-gradient-to-b from-slate-50 to-white p-6 ring-1 ring-slate-900/[0.05]">
-            <span className="mb-1 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 ring-1 ring-amber-200">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-              Sample data
-            </span>
-            <ScoreGauge value={stats.averageTotal} caption="Avg total / 10" />
-            <div className="mt-3 grid w-full grid-cols-3 gap-2 text-center">
-              {criterionAverages.map((c) => (
-                <div key={c.criterion} className="rounded-lg bg-white/70 px-2 py-2 ring-1 ring-slate-900/[0.04]">
-                  <p className="text-sm font-bold tabular-nums text-slate-900">{c.average.toFixed(1)}</p>
-                  <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-400">
-                    {c.criterion.slice(0, 4)}
-                  </p>
-                </div>
-              ))}
+          <div className="cal-animate bg-surface p-6 sm:p-8">
+            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Rubric verdict</span>
+            <div className="mt-4">
+              <CalibrationReadout score={specimen.total_score} />
+            </div>
+            <div className="mt-4 divide-y divide-hairline border-t border-hairline">
+              <CriterionBar label="Accuracy" score={specimen.accuracy.score} reasoning={specimen.accuracy.reasoning} />
+              <CriterionBar label="Clarity" score={specimen.clarity.score} reasoning={specimen.clarity.reasoning} />
+              <CriterionBar
+                label="Completeness"
+                score={specimen.completeness.score}
+                reasoning={specimen.completeness.reasoning}
+              />
             </div>
           </div>
         </div>
       </section>
 
-      {/* Stat cards */}
+      {/* Position-bias audit — the same comparison run both ways, on the page. */}
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight text-ink">Audit the judge for position bias</h2>
+          <p className="mt-1 max-w-2xl text-sm text-muted">
+            LLM judges often favour whichever output is shown first. This sample runs one comparison both ways —
+            A-then-B and B-then-A — and flags the disagreement when the verdict fails to survive the swap.
+          </p>
+        </div>
+        <ComparisonResult comparison={biasCase} />
+      </section>
+
+      {/* Summary stats */}
       <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard label="Evaluations" value={String(stats.totalEvaluations)} hint={`across ${stats.domainCount} domains`} icon={Icons.stack} />
-        <StatCard label="Average total" value={stats.averageTotal.toFixed(2)} hint="mean score, 0–10" icon={Icons.target} />
-        <StatCard label="Pairwise checks" value={String(stats.comparisonCount)} hint="run in both orderings" icon={Icons.scale} />
-        <StatCard label="Position-bias rate" value={`${stats.positionBiasRate}%`} hint="flipped on reorder" icon={Icons.alert} />
+        <StatTile label="Evaluations" value={String(stats.totalEvaluations)} hint={`across ${stats.domainCount} domains`} />
+        <StatTile label="Average total" value={stats.averageTotal.toFixed(2)} hint="mean score, 0–10" />
+        <StatTile label="Pairwise checks" value={String(stats.comparisonCount)} hint="run in both orderings" />
+        <StatTile label="Position-bias rate" value={`${stats.positionBiasRate}%`} hint="flipped on reorder" />
       </section>
 
       {/* Charts */}
@@ -159,8 +155,8 @@ export default function DashboardPage() {
       {/* Results table */}
       <section className="space-y-3">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight text-slate-900">All evaluations</h2>
-          <p className="text-sm text-slate-500">Click any row to see the output and the judge’s per-criterion reasoning.</p>
+          <h2 className="text-lg font-semibold tracking-tight text-ink">All evaluations</h2>
+          <p className="text-sm text-muted">Click any row to see the output and the judge&rsquo;s per-criterion reasoning.</p>
         </div>
         <ResultsTable rows={batchResults} />
       </section>

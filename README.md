@@ -2,7 +2,7 @@
 
 Rubric scoring and **bias-aware pairwise evaluation** for LLM outputs — with a dashboard that works with zero backend. Stateless by design: baked sample data renders instantly, and a live LLM judge scores your own inputs in-session.
 
-[![Live Demo](https://img.shields.io/badge/Live_Demo-▶_Try_It-4f46e5?style=for-the-badge)](https://ai-eval-platform.vercel.app/)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-▶_Try_It-0E6E73?style=for-the-badge)](https://ai-eval-platform.vercel.app/)
 [![Next.js 16](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
@@ -59,8 +59,8 @@ flowchart LR
 ## Tech stack
 
 - **Next.js 16** (App Router, route handlers) · **TypeScript** (strict)
-- **Tailwind CSS 4** — one restrained slate + indigo system
-- **Recharts** — dashboard visualizations
+- **Tailwind CSS 4** — a "Measurement Bench" design system: warm paper, ink, hairline rules, and a single petrol accent, with colour reserved for the score scale (rust / ochre / green). Display type is Archivo; data is set in Geist Mono with tabular figures
+- **Recharts** — dashboard visualizations, drawn as instrument readouts with solid score-scale fills
 - **FastRouter** — OpenAI-compatible LLM routing; model set via env (`LLM_MODEL`)
 - **Papa Parse** — client-side CSV parsing
 
