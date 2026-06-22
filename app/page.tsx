@@ -41,12 +41,14 @@ export default function DashboardPage() {
   const distribution = getScoreDistribution();
   const domainAverages = getDomainAverages();
 
-  // The hero specimen: a clean-looking answer that is quietly wrong, so the
-  // instrument visibly separates "well-presented" from "correct".
+  // The hero specimen: a fluent, confident answer that contradicts its own
+  // source context, so the instrument visibly separates "well-written" from
+  // "correct" — the core thing an LLM judge has to get right.
   const specimen =
-    singleScoringExamples.find((e) => e.id === 'single-math-linear') ?? singleScoringExamples[0];
+    singleScoringExamples.find((e) => e.id === 'single-grounding-refund') ?? singleScoringExamples[0];
   // A baked comparison that demonstrates position bias for the audit panel.
   const biasCase = comparisonExamples.find((c) => c.positionBias) ?? comparisonExamples[0];
+  const biasedCount = comparisonExamples.filter((c) => c.positionBias).length;
 
   return (
     <div className="space-y-12">
@@ -58,9 +60,9 @@ export default function DashboardPage() {
             Score model outputs against a rubric — and check the judge for bias.
           </h1>
           <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-muted">
-            A pre-computed run across {stats.domainCount} domains renders instantly, with no database. Then
-            judge your own outputs live: rubric scoring on accuracy, clarity, and completeness, or a pairwise
-            comparison that runs both orderings to catch position bias.
+            Per-criterion rubric scoring on accuracy, clarity, and completeness, plus pairwise comparisons
+            run in both orderings to catch position bias. {stats.totalEvaluations} scored evaluations across{' '}
+            {stats.domainCount} domains are below — or run the judge on your own output.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link href="/evaluate" className="btn-primary">
@@ -94,7 +96,7 @@ export default function DashboardPage() {
               </span>
             </div>
             <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-muted">Prompt</p>
-            <p className="mt-1 text-sm leading-relaxed text-ink">{specimen.prompt}</p>
+            <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-ink">{specimen.prompt}</p>
             <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-muted">Model output</p>
             <p className="mt-1 whitespace-pre-wrap rounded-md border border-hairline bg-paper p-3 font-mono text-xs leading-relaxed text-ink">
               {specimen.output}
@@ -123,24 +125,25 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      {/* Position-bias audit — the same comparison run both ways, on the page. */}
-      <section className="space-y-4">
-        <div>
-          <h2 className="text-lg font-semibold tracking-tight text-ink">Audit the judge for position bias</h2>
-          <p className="mt-1 max-w-2xl text-sm text-muted">
-            LLM judges often favour whichever output is shown first. This sample runs one comparison both ways —
-            A-then-B and B-then-A — and flags the disagreement when the verdict fails to survive the swap.
-          </p>
-        </div>
-        <ComparisonResult comparison={biasCase} />
-      </section>
-
-      {/* Summary stats */}
+      {/* Headline state of the run — leads as a console, not a pitch. */}
       <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatTile label="Evaluations" value={String(stats.totalEvaluations)} hint={`across ${stats.domainCount} domains`} />
         <StatTile label="Average total" value={stats.averageTotal.toFixed(2)} hint="mean score, 0–10" />
         <StatTile label="Pairwise checks" value={String(stats.comparisonCount)} hint="run in both orderings" />
         <StatTile label="Position-bias rate" value={`${stats.positionBiasRate}%`} hint="flipped on reorder" />
+      </section>
+
+      {/* Position-bias audit — reported as a finding, with the evidence inline. */}
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight text-ink">Position-bias audit</h2>
+          <p className="mt-1 max-w-2xl text-sm text-muted">
+            Every pairwise comparison is scored twice with the outputs swapped. {biasedCount} of{' '}
+            {stats.comparisonCount} runs in this set changed their winner on the swap — those verdicts are
+            flagged unreliable. One is shown below.
+          </p>
+        </div>
+        <ComparisonResult comparison={biasCase} />
       </section>
 
       {/* Charts */}
@@ -155,8 +158,8 @@ export default function DashboardPage() {
       {/* Results table */}
       <section className="space-y-3">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight text-ink">All evaluations</h2>
-          <p className="text-sm text-muted">Click any row to see the output and the judge&rsquo;s per-criterion reasoning.</p>
+          <h2 className="text-lg font-semibold tracking-tight text-ink">Evaluation runs</h2>
+          <p className="text-sm text-muted">Click any row for the scored output and the judge&rsquo;s per-criterion reasoning.</p>
         </div>
         <ResultsTable rows={batchResults} />
       </section>

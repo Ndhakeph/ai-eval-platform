@@ -95,9 +95,8 @@ export default function ComparePage() {
         </span>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink sm:text-3xl">A/B compare with position-bias check</h1>
         <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted">
-          LLM judges have a known failure mode: they often favor whichever output is shown first, regardless of quality.
-          This tool runs the comparison <strong>both ways</strong> — A-then-B and B-then-A — and flags any disagreement.
-          A verdict you can trust should survive the swap.
+          Scores the pair in <strong>both orders</strong> — A-then-B and B-then-A — and flags any verdict that
+          doesn&rsquo;t survive the swap. A result you can trust is identical both ways.
         </p>
       </div>
 

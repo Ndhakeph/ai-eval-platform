@@ -16,7 +16,7 @@ import OpenAI from 'openai';
 const RAW_KEY = process.env.FASTROUTER_API_KEY?.trim();
 
 /** Model used for judging, configurable via env. */
-export const MODEL_NAME = process.env.LLM_MODEL?.trim() || 'openai/gpt-4o-mini';
+export const MODEL_NAME = process.env.LLM_MODEL?.trim() || 'anthropic/claude-sonnet-4.6';
 
 const PLACEHOLDERS = new Set([
   '',

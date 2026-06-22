@@ -83,13 +83,17 @@ cp .env.example .env.local
 | Variable | Required | Purpose |
 | --- | --- | --- |
 | `FASTROUTER_API_KEY` | only for live judging | OpenAI-compatible key from [fastrouter.ai](https://fastrouter.ai) |
-| `LLM_MODEL` | optional | Judge model id (default `openai/gpt-4o-mini`) |
+| `LLM_MODEL` | optional | Judge model id (default `anthropic/claude-sonnet-4.6`) |
 
 ## Screenshots
 
-> _Placeholder — drop a dashboard screenshot and an A/B-compare GIF (showing the position-bias flag) here._
->
-> `docs/dashboard.png` · `docs/ab-compare.gif`
+![Eval Bench dashboard — a RAG/grounding specimen under rubric scoring, the run's headline metrics, and the position-bias audit](docs/dashboard.png)
+
+The dashboard renders entirely from baked sample data: a grounding specimen scored against its rubric, the run's headline metrics, and the position-bias audit.
+
+![A/B compare detecting position bias — the same pair judged in both presentation orders, with the flipped verdict flagged](docs/ab-compare.gif)
+
+The A/B comparison scores a pair in both presentation orders. When the winner flips on the swap, the verdict is flagged as position bias — shown here running entirely offline against baked sample data.
 
 ## What I learned
 

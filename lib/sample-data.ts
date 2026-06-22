@@ -19,7 +19,7 @@ import {
   CriterionDetail,
 } from '@/types';
 
-const MODEL = 'openai/gpt-4o-mini';
+const MODEL = 'anthropic/claude-sonnet-4.6';
 
 /** Real-decimal average, mirroring `calculateTotalScore` in lib/judge.ts. */
 function avg3(a: number, c: number, co: number): number {
@@ -43,6 +43,28 @@ const d = (score: number, reasoning: string): CriterionDetail => ({ score, reaso
 /* ========================================================================== */
 
 export const singleScoringExamples: ScoredEvaluation[] = [
+  buildEval({
+    id: 'single-grounding-refund',
+    domain: 'RAG · Grounding',
+    prompt:
+      'Using only the context below, answer the question.\n\nContext: "Returns are accepted within 30 days of delivery for unused items in original packaging. Refunds are issued to the original payment method within 5 business days of the returned item being received."\n\nQuestion: What is the refund window, and how is the refund paid?',
+    reference:
+      'Returns are accepted within 30 days of delivery (unused, original packaging). The refund is issued to the original payment method within 5 business days of the return being received.',
+    output:
+      'You can request a refund within 60 days of delivery, and the amount is credited back to your original payment method within 5 business days of us receiving the item.',
+    accuracy: d(
+      3,
+      'Not grounded in the context: the passage states a 30-day return window, but the answer asserts 60 days — a direct contradiction of the source. The payment-method and 5-business-day details are correct, so this is a confident, half-right answer, which is the dangerous kind.',
+    ),
+    clarity: d(
+      9,
+      'Fluent, well-structured, and reads with total confidence — precisely why an ungrounded number slips past a human skim.',
+    ),
+    completeness: d(
+      7,
+      'Addresses both parts of the question (window and payment method), but anchors the headline figure to a value that is not in the provided context.',
+    ),
+  }),
   buildEval({
     id: 'single-coding-palindrome',
     domain: 'Coding',
@@ -109,22 +131,22 @@ export const singleScoringExamples: ScoredEvaluation[] = [
   }),
   buildEval({
     id: 'single-math-linear',
-    domain: 'Math',
-    prompt: 'Solve 3x + 7 = 22 and show your steps.',
-    reference: 'Subtract 7: 3x = 15. Divide by 3: x = 5.',
+    domain: 'Reasoning',
+    prompt: 'After a 20% discount, a SaaS seat costs $48/month. What was the list price before the discount? Show your reasoning.',
+    reference: 'The $48 is 80% of the list price, so list = 48 / 0.8 = $60/month.',
     output:
-      'Start with 3x + 7 = 22.\nSubtract 7 from both sides: 3x = 15.\nDivide both sides by 3: x = 6.',
+      'The seat is discounted by 20%, so to undo it I add 20% back:\n$48 + (20% × $48) = $48 + $9.60 = $57.60/month.',
     accuracy: d(
       3,
-      'The final answer is wrong: 15 / 3 = 5, not 6. The method is right up to the last step, but the arithmetic error makes the solution incorrect.',
+      'Wrong inverse operation: $48 is 80% of the list price, so list = 48 / 0.8 = $60, not $57.60. Adding 20% back to the discounted figure under-recovers because the percentage base shifted — a classic and confidently-made error.',
     ),
     clarity: d(
       9,
-      'Steps are laid out cleanly and are easy to follow line by line.',
+      'The reasoning is laid out cleanly, one step at a time — which is exactly what makes the wrong method look trustworthy.',
     ),
     completeness: d(
       8,
-      'Shows all required steps and reaches a final answer, so the working is complete even though the result is wrong.',
+      'Shows the full working and commits to a single numeric answer, so the response is complete even though the result is incorrect.',
     ),
   }),
   buildEval({
@@ -276,31 +298,32 @@ export const batchResults: ScoredEvaluation[] = [
   }),
   buildEval({
     id: 'batch-07',
-    domain: 'Math',
-    prompt: 'A shirt costs $40 after a 20% discount. What was the original price?',
-    output: 'The original price was $48, since $40 plus 20% equals $48.',
-    accuracy: d(2, 'Incorrect: $40 is 80% of the original, so the original is 40 / 0.8 = $50, not $48. The method (adding 20%) is the wrong operation.'),
-    clarity: d(8, 'States a clear answer and a (flawed) one-line justification.'),
-    completeness: d(6, 'Gives an answer with reasoning, but the reasoning is wrong.'),
+    domain: 'Reasoning',
+    prompt: 'A model is billed at $0.003 per 1K input tokens. A single request sends 12,000 input tokens. What is the input cost for that request?',
+    output: '12,000 tokens ÷ 1,000 = 12 units, and 12 × $0.003 = $0.36 for the request.',
+    accuracy: d(2, 'Off by 10×: 12 × $0.003 = $0.036, not $0.36. The setup (12 units of 1K tokens) is right, but the final product misplaces the decimal point.'),
+    clarity: d(8, 'States the method and a single figure in one clean line.'),
+    completeness: d(6, 'Gives an answer with working, but the working lands on the wrong value.'),
   }),
   buildEval({
     id: 'batch-08',
-    domain: 'Math',
-    prompt: 'What is the probability of rolling a sum of 7 with two fair dice?',
-    output: 'There are 6 ways to get a sum of 7 out of 36 outcomes, so the probability is 6/36 = 1/6.',
-    accuracy: d(10, 'Correct count of favorable outcomes and correct simplification.'),
-    clarity: d(9, 'Shows the reasoning succinctly.'),
-    completeness: d(9, 'Complete: counts outcomes, gives fraction and simplified form.'),
+    domain: 'Reasoning',
+    prompt: 'A classifier has 90% precision and 80% recall. What is its F1 score?',
+    output: 'F1 = 2 × (precision × recall) / (precision + recall) = 2 × (0.9 × 0.8) / (0.9 + 0.8) = 1.44 / 1.7 ≈ 0.85.',
+    accuracy: d(10, 'Correct formula and arithmetic: 2 × 0.72 / 1.7 = 1.44 / 1.7 ≈ 0.847, properly rounded to 0.85.'),
+    clarity: d(9, 'Shows the formula, the substitution, and the result in one line.'),
+    completeness: d(9, 'Gives the formula, the computation, and a rounded final value.'),
   }),
   buildEval({
     id: 'batch-09',
     domain: 'Summarization',
-    prompt: 'Summarize the plot of Romeo and Juliet in one sentence.',
+    prompt:
+      'Summarize this changelog entry in one sentence: "v2.3 adds SSO via SAML, fixes a memory leak in the export worker, and deprecates the legacy /v1 API, which will be removed in v3."',
     output:
-      'Two young lovers from feuding families in Verona secretly marry, and a series of misunderstandings leads to both taking their own lives, ultimately reconciling their families.',
-    accuracy: d(9, 'Faithful to the plot; "misunderstandings" is a fair compression of the events.'),
-    clarity: d(9, 'Reads as a single coherent sentence.'),
-    completeness: d(8, 'Captures the arc and the tragic resolution within the one-sentence limit.'),
+      'Version 2.3 introduces SAML-based SSO, fixes a memory leak in the export worker, and deprecates the legacy /v1 API ahead of its removal in v3.',
+    accuracy: d(9, 'Preserves all three changes and the v3 removal timeline with no added or distorted claims.'),
+    clarity: d(9, 'Reads as one clean, well-ordered sentence.'),
+    completeness: d(8, 'Captures every item from the entry within the one-sentence limit.'),
   }),
   buildEval({
     id: 'batch-10',
@@ -315,21 +338,21 @@ export const batchResults: ScoredEvaluation[] = [
   buildEval({
     id: 'batch-11',
     domain: 'Factual QA',
-    prompt: 'What is the capital of Australia?',
-    output: 'The capital of Australia is Canberra (a common misconception is that it is Sydney).',
-    accuracy: d(10, 'Correct, and helpfully preempts the usual Sydney mistake.'),
-    clarity: d(10, 'Direct and unambiguous.'),
-    completeness: d(8, 'Fully answers the question; the parenthetical adds useful context.'),
+    prompt: 'Which HTTP status code indicates "Too Many Requests"?',
+    output: 'The "Too Many Requests" response is returned with HTTP status code 503.',
+    accuracy: d(2, 'Incorrect: "Too Many Requests" is 429; 503 is "Service Unavailable". A specific, confidently-stated, wrong code — the kind of factual error that passes a quick read.'),
+    clarity: d(9, 'Direct and unambiguous, which is exactly what makes the wrong code convincing.'),
+    completeness: d(6, 'Answers with a single code, but the code is wrong.'),
   }),
   buildEval({
     id: 'batch-12',
     domain: 'Factual QA',
-    prompt: 'How many continents are there and name them.',
+    prompt: 'Is a standard JSON Web Token (JWT) encrypted by default?',
     output:
-      'There are seven continents: Africa, Antarctica, Asia, Europe, North America, South America, and Australia/Oceania.',
-    accuracy: d(10, 'Correct count and complete, correctly named list.'),
-    clarity: d(9, 'Clean enumeration.'),
-    completeness: d(10, 'Names all seven; notes the Australia/Oceania convention.'),
+      'No — a standard JWT is signed and base64url-encoded, not encrypted. Anyone holding the token can read its payload, so secrets should never be placed in it unless you use the encrypted JWE variant.',
+    accuracy: d(10, 'Correct, and addresses the common misconception: signing/encoding is not encryption, and the JWE caveat is accurate.'),
+    clarity: d(9, 'Clear answer up front, then the precise reason and a practical caveat.'),
+    completeness: d(10, 'Covers the default behavior, the security implication, and the encrypted alternative.'),
   }),
   buildEval({
     id: 'batch-13',
@@ -487,6 +510,85 @@ export const comparisonExamples: ABComparison[] = [
       clarity: v('tie', 'Shown first, B’s brevity reads as adequately clear, narrowing the gap.'),
       completeness: v('tie', 'The judge now treats B’s example and A’s analogy as roughly equivalent.'),
       overall: v('tie', 'The verdict softened from "A wins" to "tie" when the order changed — a milder but real position-bias signal.'),
+    },
+  ),
+  // --- Consistent winner: A is correct, B hand-waves --------------------------
+  buildComparison(
+    {
+      id: 'compare-reasoning-latency',
+      domain: 'Reasoning',
+      prompt:
+        'A cache has a 95% hit rate. A hit costs 1ms and a miss costs 100ms. What is the average latency per request?',
+      outputA:
+        'Weighted average: 0.95 × 1ms + 0.05 × 100ms = 0.95 + 5 = 5.95ms per request.',
+      outputB:
+        'Since almost every request is a cache hit, the average latency is roughly 1ms — close to the hit cost.',
+    },
+    {
+      firstShown: 'A',
+      accuracy: v('A', 'A computes the correct expected value (5.95ms); B hand-waves to ~1ms and ignores the 5% of misses that dominate the average.'),
+      clarity: v('A', 'A shows the weighted-average calculation explicitly; B asserts a number with no working.'),
+      completeness: v('A', 'A accounts for both branches and their weights; B omits the miss cost entirely.'),
+      overall: v('A', 'A is correct and shows its reasoning; B is intuitive but wrong.'),
+    },
+    {
+      firstShown: 'B',
+      accuracy: v('A', 'Order aside, A’s 5.95ms is the right expected value; B understates it by roughly 6×.'),
+      clarity: v('A', 'A’s explicit computation stays clearer than B’s assertion.'),
+      completeness: v('A', 'A still covers both branches; B still drops the miss contribution.'),
+      overall: v('A', 'Consistent across both orders — A wins on correctness, not position.'),
+    },
+  ),
+  // --- Consistent winner: A is precise, B conflates concepts ------------------
+  buildComparison(
+    {
+      id: 'compare-factual-idempotent',
+      domain: 'Factual QA',
+      prompt: 'What does it mean for an HTTP method to be idempotent?',
+      outputA:
+        'An idempotent method leaves the server in the same state no matter how many times an identical request is sent. PUT and DELETE are idempotent; POST generally is not. Idempotent is not the same as "safe" — a safe method makes no changes at all.',
+      outputB:
+        'Idempotent means the method is safe and never changes anything on the server, like GET.',
+    },
+    {
+      firstShown: 'A',
+      accuracy: v('A', 'A is correct and draws the key distinction (idempotent ≠ safe); B conflates the two and wrongly implies idempotent methods never modify state.'),
+      clarity: v('A', 'A is precise with correct examples; B is concise but built on a wrong premise.'),
+      completeness: v('A', 'A covers the definition, examples, and the safe-vs-idempotent nuance; B misses all of it.'),
+      overall: v('A', 'A is the accurate, complete answer.'),
+    },
+    {
+      firstShown: 'B',
+      accuracy: v('A', 'Shown first or not, B’s "idempotent means safe" is incorrect; A remains right.'),
+      clarity: v('A', 'A’s precision wins regardless of order.'),
+      completeness: v('A', 'A still covers the nuance B omits.'),
+      overall: v('A', 'Consistent both ways — A wins on substance.'),
+    },
+  ),
+  // --- Consistent winner: A keeps the causal chain, B is vague ----------------
+  buildComparison(
+    {
+      id: 'compare-summary-incident',
+      domain: 'Summarization',
+      prompt:
+        'Summarize in one sentence: "The deploy was rolled back because a migration locked the orders table for 40s, tripping the health check, which the load balancer treated as an outage."',
+      outputA:
+        'The deploy was rolled back after a migration locked the orders table for 40s, failing the health check and signaling an outage to the load balancer.',
+      outputB: 'The deployment hit a database problem and was automatically rolled back.',
+    },
+    {
+      firstShown: 'A',
+      accuracy: v('A', 'A preserves the causal chain (lock → health-check failure → load-balancer rollback); B is accurate but too vague to convey the cause.'),
+      clarity: v('A', 'A is specific yet readable; B is clear but uninformative.'),
+      completeness: v('A', 'A keeps every link in the chain; B collapses it to "a database problem".'),
+      overall: v('A', 'A is the faithful, informative summary.'),
+    },
+    {
+      firstShown: 'B',
+      accuracy: v('A', 'A’s causal detail beats B’s vagueness in either order.'),
+      clarity: v('A', 'A stays the more informative summary.'),
+      completeness: v('A', 'A retains the chain B drops.'),
+      overall: v('A', 'Consistent both ways — A wins on faithfulness.'),
     },
   ),
 ];

@@ -110,8 +110,8 @@ export default function ComparisonResult({ comparison }: { comparison: Compariso
       </div>
 
       <p className="text-xs text-muted">
-        Judged by <span className="font-mono text-ink">{comparison.model_used}</span>. Each comparison runs
-        twice with the outputs swapped; a robust verdict should be identical both times.
+        Judged by <span className="font-mono text-ink">{comparison.model_used}</span> · each pair scored in
+        both orderings.
       </p>
     </div>
   );
